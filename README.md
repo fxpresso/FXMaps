@@ -16,7 +16,7 @@ Right now it is a project meant for import into an IDE. There is a reference imp
 
 ai.cogmission.fxmaps.RefImpl
 
-I will keep its status up to date until I reach the point where I can start work on the project that uses this library (see [Nostromo](https://github.com/cogmission/Nostromo)
+I will keep its status up to date until I reach the point where I can start work on the project that uses this library (see [Nostromo](https://github.com/cogmission/Nostromo))
 
 (2015-09-23) Running the above class loads a map, an empty directions pane (to the right) and will place a marker any place the user clicks. It will automatically locate the user and print out their location to standard out (it doesn't yet center the map there, which will be one of the next things I do).
 
