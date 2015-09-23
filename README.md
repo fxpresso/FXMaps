@@ -22,6 +22,7 @@ I will keep its status up to date until I reach the point where I can start work
 **(2015-09-23)**
 * Running the above class loads a map, an empty directions pane (to the right) and will place a marker any place the user clicks. It will automatically locate the user and print out their location to standard out (it doesn't yet center the map there, which will be one of the next things I do).
 * Prints out lat/lon of click to standard out
+* Prints out lat/lon to/from pixel conversion
 
 
 ### Stay Tuned For More as this gets flushed out! :-)
