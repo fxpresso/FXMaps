@@ -1,5 +1,7 @@
 package ai.cogmission.fxmaps.ui;
 
+import java.util.List;
+
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
@@ -10,6 +12,7 @@ import ai.cogmission.fxmaps.event.MapEventHandler;
 import ai.cogmission.fxmaps.event.MapEventType;
 import ai.cogmission.fxmaps.event.MapInitializedListener;
 import ai.cogmission.fxmaps.event.MapReadyListener;
+import ai.cogmission.fxmaps.event.RouteAlreadyExistsException;
 import ai.cogmission.fxmaps.model.DirectionsRoute;
 import ai.cogmission.fxmaps.model.LatLon;
 import ai.cogmission.fxmaps.model.MapObject;
@@ -49,6 +52,15 @@ public interface Map extends MapComponentInitializedListener {
      * @param n a toolbar
      */
     public void addToolBar(Node n);
+    /**
+     * Sets the flag indicating which mode the {@code Map} is currently in.
+     * "Regular mode" is the mode where routes are loaded from external 
+     * sources, and "Route Simulation Mode" is where the user can click on 
+     * the map and create new routes.
+     * 
+     * @param b     true if in simulation mode, false if not
+     */
+    public void setRouteSimulationMode(boolean b);
     /**
      * Centers this {@code Map} on the user's current city location.
      */
@@ -122,6 +134,44 @@ public interface Map extends MapComponentInitializedListener {
      */
     public void removeWaypoint(Waypoint wayoint);
     /**
+     * Creates a {@link Route} by the given name.
+     * 
+     * @param name      the name of the new Route
+     * @return  the route which was added.
+     * @throws RouteAlreadyExistsException  if a Route by the specified name already exists.
+     */
+    public static Route createRoute(String name) throws RouteAlreadyExistsException {
+        
+        Route r = new Route(name);
+        return r;
+    }
+    
+    public static void checkRoute(String name) throws RouteAlreadyExistsException {
+        
+    }
+    
+    /**
+     * Adds a {@link Route} to this {@code Map}
+     * @param route     the route to add
+     */
+    public void addRoute(Route route);
+    /**
+     * Removes the specified {@link Route} from this {@code Map}
+     * 
+     * @param route     the route to remove
+     */
+    public void removeRoute(Route route);
+    /**
+     * Adds a list of {@link Route}s to this {@code Map}
+     * 
+     * @param routes    the list of routes to add
+     */
+    public void addRoutes(List<Route> routes);
+    /**
+     * Removes all {@link Route}s from this {@code Map}
+     */
+    public void removeAllRoutes();
+    /**
      * Returns a Route consisting of arbitrary {@link Waypoint}s into a
      * {@link DirectionsRoute} which adheres to Streets and Highways. In
      * order to do this, a given route may have {@link Waypoint}s added to
@@ -139,7 +189,16 @@ public interface Map extends MapComponentInitializedListener {
      * @param eventType     the Event Type to monitor
      * @param handler       the handler to be notified.
      */
-    public void addMapEventHandler(MapObject mapObject, MapEventType eventType, MapEventHandler handler);
+    public void addObjectEventHandler(MapObject mapObject, MapEventType eventType, MapEventHandler handler);
+    /**
+     * Adds an EventHandler which can be notified of JavaScript events 
+     * arising from the map object within a given {@link WebView}
+     * 
+     * @param mapObject     the {@link MapObject} event source
+     * @param eventType     the Event Type to monitor
+     * @param handler       the handler to be notified.
+     */
+    public void addMapEventHandler(MapEventType eventType, MapEventHandler handler);
     /**
      * Adds a {@link MapObject} JavaScript peer to the map object's DOM.
      * @param mapObject

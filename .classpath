@@ -13,7 +13,7 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="libs/google-maps-services-0.1.7.jar"/>
+	<classpathentry kind="lib" path="libs/google-maps-services-0.1.7.jar" sourcepath="/Users/cogmission/.m2/repository/com/google/maps/google-maps-services/0.1.7/google-maps-services-0.1.7-sources.jar"/>
 	<classpathentry kind="lib" path="libs/geoip2-2.3.1.jar"/>
 	<classpathentry kind="lib" path="libs/maxmind-db-1.0.0.jar"/>
 	<classpathentry kind="lib" path="libs/jackson-annotations-2.4.0.jar"/>
@@ -21,5 +21,6 @@
 	<classpathentry kind="lib" path="libs/jackson-databind-2.4.4.jar"/>
 	<classpathentry kind="lib" path="libs/gmapsfx.jar" sourcepath="/GMapsFX"/>
 	<classpathentry kind="lib" path="libs/joda-time-2.5.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

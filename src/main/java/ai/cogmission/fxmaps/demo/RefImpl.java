@@ -1,7 +1,8 @@
-package ai.cogmission.fxmaps;
+package ai.cogmission.fxmaps.demo;
 
 import javafx.application.Application;
 import javafx.scene.Scene;
+import javafx.scene.control.Separator;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
 import javafx.stage.Stage;
@@ -16,6 +17,7 @@ import ai.cogmission.fxmaps.ui.Map;
 public class RefImpl extends Application {
     private Map map;
     
+    private ToggleButton simulationBtn;
     private ToggleButton directionsBtn;
     
     @Override
@@ -33,6 +35,8 @@ public class RefImpl extends Application {
      */
     public void createToolBar() {
         ToolBar toolBar = new ToolBar(
+            simulationBtn = new ToggleButton("Directions"),
+            new Separator(),
             directionsBtn = new ToggleButton("Directions")
         );
         
@@ -43,6 +47,7 @@ public class RefImpl extends Application {
      * Add the ToolBar's action handlers etc.
      */
     public void configureToolBar() {
+        simulationBtn.setOnAction(e -> map.setRouteSimulationMode(simulationBtn.isSelected()));
         directionsBtn.setOnAction(e -> map.setDirectionsVisible(directionsBtn.isSelected()));
         directionsBtn.setSelected(true);
     }

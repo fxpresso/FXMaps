@@ -30,7 +30,7 @@ public class EncodedPolyline extends com.google.maps.model.EncodedPolyline {
     public EncodedPolyline(List<LatLon> points) {
         super(
             points.stream()
-            .map(ll -> { return new LatLng(ll.latitude(), ll.longitude()); })
+            .map(ll -> { return new LatLng(ll.getLatitude(), ll.getLongitude()); })
             .collect(Collectors.toList()));
         
         this.points = getEncodedPath();

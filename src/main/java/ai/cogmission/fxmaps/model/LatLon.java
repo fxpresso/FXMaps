@@ -1,5 +1,7 @@
 package ai.cogmission.fxmaps.model;
 
+import javafx.scene.web.WebEngine;
+
 import com.google.maps.model.LatLng;
 import com.lynden.gmapsfx.javascript.object.LatLong;
 
@@ -14,6 +16,35 @@ public class LatLon {
     
     private LatLong latLong;
     
+    private boolean isExternal;
+    
+    
+    /**
+     * Constructs a new {@code LatLon}, specifying whether this object
+     * is being created in "test mode" (i.e. without a {@link WebEngine})
+     * 
+     * @param latitude      the latitude
+     * @param longitude     the longitude
+     * @param isExternal    true if for test, false if not
+     */
+    public LatLon(double latitude, double longitude, boolean isExternal) {
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.isExternal = isExternal;
+        if(!isExternal) {
+            this.latLong = new com.lynden.gmapsfx.javascript.object.LatLong(latitude, longitude);
+        }
+    }
+    
+    /**
+     * Returns the flag specifying whether this was created in "test mode" or not.
+     * 
+     * @return  true if for test, false if not.
+     */
+    public boolean isExternal() {
+        return isExternal;
+    }
+    
     /**
      * Constructs a new {@code LatLon} 
      * 
@@ -21,9 +52,7 @@ public class LatLon {
      * @param longitude
      */
     public LatLon(double latitude, double longitude) {
-        this.latitude = latitude;
-        this.longitude = longitude;
-        this.latLong = new com.lynden.gmapsfx.javascript.object.LatLong(latitude, longitude);
+        this(latitude, longitude, false);
     }
     
     /**
@@ -40,7 +69,7 @@ public class LatLon {
      * Returns the latitude 
      * @return  the latitude (double)
      */
-    public double latitude() {
+    public double getLatitude() {
         return latitude;
     }
     
@@ -48,7 +77,7 @@ public class LatLon {
      * Returns the longitude (double)
      * @return  the longitude (double)
      */
-    public double longitude() {
+    public double getLongitude() {
         return longitude;
     }
     

@@ -34,7 +34,6 @@ public class Locator {
         DatabaseReader reader = new DatabaseReader.Builder(is).build();
         CityResponse response = reader.city(InetAddress.getByName(ipStr));
 
-
         System.out.println("City " +response.getCity());
         System.out.println("ZIP Code " +response.getPostal().getCode());
         System.out.println("Country " +response.getCountry());

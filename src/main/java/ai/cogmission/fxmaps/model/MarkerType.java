@@ -41,6 +41,12 @@ public enum MarkerType {
         return retVal;
     }
     
+    public static void reset() {
+        for(MarkerType mt : values()) {
+            cursors.put(mt, new Character((char)('A' - 1)));
+        }
+    }
+    
     public String iconPath() {
         if(chr() == 'A' - 1) next();
         

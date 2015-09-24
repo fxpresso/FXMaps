@@ -11,9 +11,15 @@ public class Marker implements MapObject {
     private com.lynden.gmapsfx.javascript.object.Marker marker;
     
     private String title;
+    private Animation animation = Animation.NULL;
+    private MarkerOptions options;
     
     public Marker(MarkerOptions options) {
-        this.marker = new com.lynden.gmapsfx.javascript.object.Marker(options.convert());
+        this.options = options;
+        this.title = options.getTitle();
+        if(!options.isExternal()) {
+            this.marker = new com.lynden.gmapsfx.javascript.object.Marker(options.convert());
+        }
     }
     
     /**
@@ -37,8 +43,24 @@ public class Marker implements MapObject {
      * Sets how the marker should be animated.  To clear the animation use Animation.NULL
      * @param animation The animation to use for this marker.
      */
-    public void setAnimation( Animation animation ) {
+    public void setAnimation(Animation animation) {
         marker.setAnimation(animation.convert());
+    }
+    
+    /**
+     * Returns the {@link Animation} to use.
+     * @return
+     */
+    public Animation getAnimation() {
+        return animation;
+    }
+    
+    /**
+     * Returns the {@link MarkerOptions}
+     * @return
+     */
+    public MarkerOptions getMarkerOptions() {
+        return options;
     }
     
     /**
