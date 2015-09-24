@@ -6,8 +6,13 @@ import ai.cogmission.fxmaps.model.DirectionsLeg;
 import ai.cogmission.fxmaps.model.DirectionsStep;
 import ai.cogmission.fxmaps.model.Waypoint;
 import javafx.geometry.Insets;
+import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.BackgroundFill;
+import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 
 /**
  * Right pane which displays directions arranged in vertical panels for
@@ -18,6 +23,8 @@ import javafx.scene.layout.VBox;
  *
  */
 public class DirectionsPane extends ScrollPane {
+    private String bulletinText = "Walking directions are in beta. Use caution – This route may be missing sidewalks or pedestrian paths.";
+
     /** Container for labels and panes arranged vertically in display */
     private VBox directionsBox;
     
@@ -34,6 +41,8 @@ public class DirectionsPane extends ScrollPane {
          
         directionsBox.maxWidthProperty().bind(widthProperty().subtract(10));
         
+        addDirectionsBulletinPane(bulletinText);
+        
         setContent(directionsBox);
     }
     
@@ -45,7 +54,19 @@ public class DirectionsPane extends ScrollPane {
      * @param message   the message to display
      */
     public void addDirectionsBulletinPane(String message) {
-        
+        Label l = new Label(message);
+        l.setBackground(new Background(
+            new BackgroundFill(
+                Color.color(
+                    Color.YELLOW.getRed(), 
+                    Color.YELLOW.getGreen(), 
+                    Color.YELLOW.getBlue(), 0.4d),
+                new CornerRadii(5), 
+                null)));
+        l.setWrapText(true);
+        l.setPrefWidth(200);
+        l.setPadding(new Insets(5,5,5,5));
+        directionsBox.getChildren().add(l);
     }
     
     /**

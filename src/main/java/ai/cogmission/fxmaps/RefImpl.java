@@ -1,9 +1,11 @@
 package ai.cogmission.fxmaps;
 
-import ai.cogmission.fxmaps.ui.MapPane;
 import javafx.application.Application;
 import javafx.scene.Scene;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.control.ToolBar;
 import javafx.stage.Stage;
+import ai.cogmission.fxmaps.ui.Map;
 
 /**
  * Reference implementation for the FXMaps library.
@@ -12,18 +14,37 @@ import javafx.stage.Stage;
  *
  */
 public class RefImpl extends Application {
-    private MapPane mapPane;
+    private Map map;
+    
+    private ToggleButton directionsBtn;
     
     @Override
     public void start(Stage primaryStage) throws Exception {
-        mapPane = new MapPane();
-        mapPane.setPrefWidth(1000);
-        mapPane.setPrefHeight(780);
-        mapPane.setDirectionsVisible(true);
-        
-        Scene scene = new Scene(mapPane, 1000, 780);
+        map = Map.create();
+        createToolBar();
+        configureToolBar();
+        Scene scene = new Scene(map.getNode(), Map.DEFAULT_WIDTH, Map.DEFAULT_HEIGHT);
         primaryStage.setScene(scene);
         primaryStage.show();
+    }
+    
+    /**
+     * Create the {@link ToolBar} for controlling map parameters.
+     */
+    public void createToolBar() {
+        ToolBar toolBar = new ToolBar(
+            directionsBtn = new ToggleButton("Directions")
+        );
+        
+        map.addToolBar(toolBar);
+    }
+    
+    /**
+     * Add the ToolBar's action handlers etc.
+     */
+    public void configureToolBar() {
+        directionsBtn.setOnAction(e -> map.setDirectionsVisible(directionsBtn.isSelected()));
+        directionsBtn.setSelected(true);
     }
     
     /**

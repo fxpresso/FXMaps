@@ -3,21 +3,31 @@ package ai.cogmission.fxmaps.ui;
 import java.util.ArrayList;
 import java.util.List;
 
-import javafx.application.Platform;
+import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.geometry.Point2D;
+import javafx.scene.Node;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import netscape.javascript.JSObject;
+import ai.cogmission.fxmaps.event.MapEventHandler;
+import ai.cogmission.fxmaps.event.MapEventType;
+import ai.cogmission.fxmaps.event.MapInitializedListener;
+import ai.cogmission.fxmaps.event.MapReadyListener;
+import ai.cogmission.fxmaps.model.DirectionsRoute;
 import ai.cogmission.fxmaps.model.LatLon;
 import ai.cogmission.fxmaps.model.Locator;
+import ai.cogmission.fxmaps.model.MapObject;
+import ai.cogmission.fxmaps.model.MapType;
 import ai.cogmission.fxmaps.model.Marker;
 import ai.cogmission.fxmaps.model.MarkerOptions;
 import ai.cogmission.fxmaps.model.MarkerType;
+import ai.cogmission.fxmaps.model.Route;
 import ai.cogmission.fxmaps.model.Waypoint;
 
 import com.lynden.gmapsfx.GoogleMapView;
-import com.lynden.gmapsfx.MapComponentInitializedListener;
 import com.lynden.gmapsfx.javascript.event.UIEventType;
 import com.lynden.gmapsfx.javascript.object.GoogleMap;
 import com.lynden.gmapsfx.javascript.object.LatLong;
@@ -31,9 +41,9 @@ import com.lynden.gmapsfx.javascript.object.MapTypeIdEnum;
  * @author cogmission
  *
  */
-public class MapPane extends BorderPane implements MapComponentInitializedListener {
+public class MapPane extends BorderPane implements Map {
     protected GoogleMapView mapComponent;
-    protected GoogleMap map;
+    protected GoogleMap delegate;
     
     protected DirectionsPane directionsPane;
     
@@ -55,22 +65,21 @@ public class MapPane extends BorderPane implements MapComponentInitializedListen
         setDirectionsVisible(false);
     }
     
+    @Override
     public void addMarker(Marker marker) {
-        map.addMarker(marker.convert());
-        Platform.runLater(() -> {
-            String name = marker.convert().getVariableName();
-            System.out.println("marker name = " + name);
-            Object obj = map.getJSObject().getMember(name);
-            System.out.println("marker obj = " + obj);
-            System.out.println("icon = " + marker.convert().getJSObject().getMember("icon"));
-        });
-        
+        delegate.addMarker(marker.convert());
+        String name = marker.convert().getVariableName();
+        System.out.println("marker name = " + name);
+        Object obj = delegate.getJSObject().getMember(name);
+        System.out.println("marker obj = " + obj);
+        System.out.println("icon = " + marker.convert().getJSObject().getMember("icon"));
     }
     
     /**
      * Makes the right {@link DirectionsPane} visible or invisible.
      * @param b
      */
+    @Override
     public void setDirectionsVisible(boolean b) {
         if(b) {
             if(getRight() == null) {
@@ -113,9 +122,9 @@ public class MapPane extends BorderPane implements MapComponentInitializedListen
             .mapTypeControl(false)
             .mapType(MapTypeIdEnum.ROADMAP);
 
-        map = mapComponent.createMap(options);
+        delegate = mapComponent.createMap(options);
         
-        map.addUIEventHandler(UIEventType.click, (JSObject obj) -> {
+        delegate.addUIEventHandler(UIEventType.click, (JSObject obj) -> {
             LatLong ll = new LatLong((JSObject) obj.getMember("latLng"));
             LatLon newLL = null;
             MarkerOptions opts = new MarkerOptions()
@@ -131,6 +140,15 @@ public class MapPane extends BorderPane implements MapComponentInitializedListen
             addMarker(marker);
         });
     }
+    
+    /**
+     * Adds a {@link Node} acting as a toolbar
+     * @param n a toolbar
+     */
+    public void addToolBar(Node n) {
+        setTop(n);
+    }
+    
     List<Waypoint> route = new ArrayList<>();
     /**
      * Returns a mutable {@link IntegerProperty} used to display
@@ -138,8 +156,9 @@ public class MapPane extends BorderPane implements MapComponentInitializedListen
      * 
      * @return zoom {@link IntegerProperty}
      */
+    @Override
     public IntegerProperty zoomProperty() {
-        return map.zoomProperty();
+        return delegate.zoomProperty();
     }
     
     /**
@@ -148,10 +167,110 @@ public class MapPane extends BorderPane implements MapComponentInitializedListen
      */
     private void checkCenter(LatLon center) {
         System.out.println("Testing fromLatLngToPoint using: " + center);
-        Point2D p = map.fromLatLngToPoint(center.toLatLong());
+        Point2D p = delegate.fromLatLngToPoint(center.toLatLong());
         System.out.println("Testing fromLatLngToPoint result: " + p);
         System.out.println("Testing fromLatLngToPoint expected: " + mapComponent.getWidth()/2 + ", " + mapComponent.getHeight()/2);
         System.out.println("type = "+ MarkerType.BROWN.iconPath());
     }
+
+    @Override
+    public void centerMapOnLocal() {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void addMapInializedListener(MapInitializedListener listener) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void removeMapInitializedListener(MapInitializedListener listener) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void addMapReadyListener(MapReadyListener listener) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void removeReadyListener(MapReadyListener listener) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void removeMarker(Marker marker) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public Waypoint createWaypoint(LatLon latLon) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void addWaypoint(Waypoint waypoint) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void removeWaypoint(Waypoint wayoint) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public DirectionsRoute getSnappedDirectionsRoute(Route route) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public void addMapEventHandler(MapObject mapObject, MapEventType eventType, MapEventHandler handler) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void addMapObject(MapObject mapObject) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public BooleanProperty routeSnappedProperty() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ObjectProperty<ObservableValue<MapType>> mapTypeProperty() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ObjectProperty<ObservableValue<LatLon>> clickProperty() {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public ObjectProperty<ObservableValue<LatLon>> centerMapProperty() {
+        // TODO Auto-generated method stub
+        return null;
+    }
     
+    @Override
+    public MapPane getNode() {
+        return this;
+    }
 }

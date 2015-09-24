@@ -4,6 +4,7 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.value.ObservableValue;
+import javafx.scene.Node;
 import javafx.scene.web.WebView;
 import ai.cogmission.fxmaps.event.MapEventHandler;
 import ai.cogmission.fxmaps.event.MapEventType;
@@ -17,9 +18,37 @@ import ai.cogmission.fxmaps.model.Marker;
 import ai.cogmission.fxmaps.model.Route;
 import ai.cogmission.fxmaps.model.Waypoint;
 
+import com.lynden.gmapsfx.MapComponentInitializedListener;
+import com.lynden.gmapsfx.javascript.object.MapOptions;
 
 
-public interface Map extends MapInitializedListener {
+
+public interface Map extends MapComponentInitializedListener {
+    public static final double DEFAULT_WIDTH = 1000;
+    public static final double DEFAULT_HEIGHT = 780;
+    
+    /**
+     * Factory method to create and return a {@code Map} 
+     * 
+     * @return  a map
+     */
+    public static Map create() {
+        MapPane map = new MapPane();
+        map.getNode().setPrefWidth(Map.DEFAULT_WIDTH);
+        map.getNode().setPrefHeight(Map.DEFAULT_HEIGHT);
+        map.setDirectionsVisible(true);
+        return map;
+    }
+    /**
+     * Returns the MapPane Node
+     * @return
+     */
+    public MapPane getNode();
+    /**
+     * Adds a {@link Node} acting as a toolbar
+     * @param n a toolbar
+     */
+    public void addToolBar(Node n);
     /**
      * Centers this {@code Map} on the user's current city location.
      */
@@ -117,7 +146,14 @@ public interface Map extends MapInitializedListener {
      */
     public void addMapObject(MapObject mapObject);
     
-    // Properties for control
+    ///////////////////////////////////////
+    //        Properties for control     //
+    ///////////////////////////////////////
+    /**
+     * Sets the {@link DirectionsPane} visible flag.
+     * @param b     true if visible, false if not
+     */
+    public void setDirectionsVisible(boolean b);
     /**
      * Returns the property tracking the "isSnapped" flag - which indicates that
      * route {@link Waypoint}s will adhere to known roads or highways.
@@ -137,7 +173,7 @@ public interface Map extends MapInitializedListener {
      * 
      * @return  {@link ObjectProperty} containing {@link LatLon} changes.
      */
-    public ObjectProperty<ObservableValue<LatLon>> centerProperty();
+    public ObjectProperty<ObservableValue<LatLon>> centerMapProperty();
     /**
      * Returns a property which tracks user setting of {@link MapType}
      * 
@@ -151,9 +187,5 @@ public interface Map extends MapInitializedListener {
      * @return  {@link ObjectProperty} controlling click locations.
      */
     public ObjectProperty<ObservableValue<LatLon>> clickProperty();
-    /**
-     * Overrides {@link MapInitializedListener} notification method.
-     */
-    @Override
-    public void mapInitialized();
+    
 }
