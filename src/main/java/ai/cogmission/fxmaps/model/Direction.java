@@ -1,5 +1,7 @@
 package ai.cogmission.fxmaps.model;
 
+import ai.cogmission.fxmaps.ui.DirectionsPane;
+
 /**
  * Designates the pixel location of a composite image containing
  * directional icons used for the {@link DirectionsPane}.

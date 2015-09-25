@@ -16,7 +16,6 @@ public class LatLon {
     
     private LatLong latLong;
     
-    private boolean isExternal;
     
     
     /**
@@ -25,34 +24,11 @@ public class LatLon {
      * 
      * @param latitude      the latitude
      * @param longitude     the longitude
-     * @param isExternal    true if for test, false if not
-     */
-    public LatLon(double latitude, double longitude, boolean isExternal) {
-        this.latitude = latitude;
-        this.longitude = longitude;
-        this.isExternal = isExternal;
-        if(!isExternal) {
-            this.latLong = new com.lynden.gmapsfx.javascript.object.LatLong(latitude, longitude);
-        }
-    }
-    
-    /**
-     * Returns the flag specifying whether this was created in "test mode" or not.
-     * 
-     * @return  true if for test, false if not.
-     */
-    public boolean isExternal() {
-        return isExternal;
-    }
-    
-    /**
-     * Constructs a new {@code LatLon} 
-     * 
-     * @param latitude
-     * @param longitude
      */
     public LatLon(double latitude, double longitude) {
-        this(latitude, longitude, false);
+        this.latitude = latitude;
+        this.longitude = longitude;
+        this.latLong = new com.lynden.gmapsfx.javascript.object.LatLong(latitude, longitude);
     }
     
     /**

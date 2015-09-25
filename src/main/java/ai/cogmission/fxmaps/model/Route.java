@@ -4,9 +4,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+
+import com.google.gson.annotations.SerializedName;
 
 /**
  * Abstraction of a given path which connects a series of {@link Waypoint}s.
@@ -15,9 +18,15 @@ import javafx.collections.ObservableList;
  * @see Waypoint
  */
 public class Route {
-    private ObservableList<Waypoint> delegate = FXCollections.observableArrayList();
+    
+    private ObservableList<Waypoint> observableDelegate = FXCollections.observableArrayList();
+    
+    @SerializedName("waypoints")
+    private List<Waypoint> delegate = new ArrayList<>();
     
     private String name;
+    private Waypoint origin;
+    private Waypoint destination;
 
     /** Constructs a new {@code Route} */
     public Route(String name) {
@@ -37,7 +46,11 @@ public class Route {
      * @param w
      */
     public void add(Waypoint w) {
-        delegate.add(w);
+        if(observableDelegate.isEmpty()) {
+            origin = w;
+        }
+        destination = w;
+        observableDelegate.add(w);
     }
     
     /**
@@ -45,14 +58,14 @@ public class Route {
      * @param w
      */
     public void remove(Waypoint w) {
-        delegate.remove(w);
+        observableDelegate.remove(w);
     }
     
     /**
      * Removes all {@link Waypoint}s from this list.
      */
     public void removeAll() {
-        delegate.removeAll();
+        observableDelegate.clear();
     }
     
     /**
@@ -64,7 +77,7 @@ public class Route {
      * @throws  IndexOutOfBoundsException if index > size - 1
      */
     public Waypoint get(int index) {
-        return delegate.get(index);
+        return observableDelegate.get(index);
     }
     
     /**
@@ -75,7 +88,7 @@ public class Route {
      * @param w         the Waypoint to add
      */
     public void add(int index, Waypoint w) {
-        delegate.add(index, w);
+        observableDelegate.add(index, w);
     }
     
     /**
@@ -85,7 +98,7 @@ public class Route {
      * @param l     the listener to add
      */
     public void addListener(ListChangeListener<Waypoint> l) {
-        delegate.addListener(l);
+        observableDelegate.addListener(l);
     }
     
     /**
@@ -94,7 +107,7 @@ public class Route {
      * @param l     the listener to remove
      */
     public void removeListener(ListChangeListener<Waypoint> l) {
-        delegate.removeListener(l);
+        observableDelegate.removeListener(l);
     }
     
     /**
@@ -105,7 +118,7 @@ public class Route {
      * @param w         the Waypoint to set at the specified index.
      */
     public void set(int index, Waypoint w) {
-        delegate.set(index, w);
+        observableDelegate.set(index, w);
     }
     
     /**
@@ -115,9 +128,7 @@ public class Route {
      * @return  the starting {@link Waypoint}
      */
     public Waypoint getOrigin() {
-        if(delegate.size() < 1) return null;
-        
-        return delegate.get(0);
+        return origin;
     }
     
     /**
@@ -129,9 +140,16 @@ public class Route {
      * @return  the end point {@link Waypoint}
      */
     public Waypoint getDestination() {
-        if(delegate.size() < 1) return null;
-        
-        return delegate.get(delegate.size() - 1);
+        return destination;
+    }
+    
+    /**
+     * Returns all the {@link Waypoint}s of a given route.
+     *  
+     * @return  a list of all {@link Waypoint}s
+     */
+    public List<Waypoint> getWaypoints() {
+        return observableDelegate;
     }
     
     /**
@@ -139,20 +157,46 @@ public class Route {
      * are defined as the waypoints which are not the origin nor 
      * destination waypoints.
      *  
-     * @return
+     * @return  a list of {@link Waypoint}s minus the start and end
      */
-    public List<Waypoint> getWaypoints() {
-        if(delegate.size() < 3) return Collections.emptyList();
+    public List<Waypoint> getInterimWaypoints() {
+        if(observableDelegate.size() < 3) return Collections.emptyList();
         
-        List<Waypoint> retVal = new ArrayList<>(delegate);
+        List<Waypoint> retVal = new ArrayList<>(observableDelegate);
         retVal.remove(0);
         retVal.remove(retVal.size() - 1);
-        return retVal;
+        return retVal;  
+    }
+    
+    /**
+     * Called prior to serialization to load the serializable data structure.
+     */
+    public void preSerialize() {
+        delegate.addAll(observableDelegate);
+    }
+    
+    /**
+     * Called following deserialization to load the observable list. The observable
+     * list cannot be serialized using the current method, so we use a simple list
+     * for serialization and then copy the data over, after deserialization.
+     */
+    public void postDeserialize() {
+        observableDelegate = FXCollections.observableArrayList(delegate);
+        delegate.clear();
+        
+        // If deserializing in non-headless mode, build javascript peers
+        if(Platform.isFxApplicationThread()) {
+            origin.getMarker().createUnderlying();
+            destination.getMarker().createUnderlying();
+            for(Waypoint wp : observableDelegate) {
+                wp.getMarker().createUnderlying();
+            }
+        }
     }
     
     @Override
     public String toString() {
         return "Route [name=" + name + ", origin=" + getOrigin() + ", destination=" + getDestination() + 
-                ", all=" + this + ", interim=" + getWaypoints() + "]";
+                ", interim=" + getInterimWaypoints() + "]";
     }
 }

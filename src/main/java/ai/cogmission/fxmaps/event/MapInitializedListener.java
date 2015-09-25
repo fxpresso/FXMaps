@@ -1,7 +1,9 @@
 package ai.cogmission.fxmaps.event;
 
-import ai.cogmission.fxmaps.ui.Map;
 import javafx.scene.web.WebView;
+import ai.cogmission.fxmaps.ui.Map;
+
+import com.lynden.gmapsfx.javascript.object.MapOptions;
 
 /**
  * For clients interested in notifications for map initialization.

@@ -1,6 +1,7 @@
 package ai.cogmission.fxmaps.event;
 
 import ai.cogmission.fxmaps.model.Route;
+import ai.cogmission.fxmaps.model.Waypoint;
 
 /**
  * A handler to be installed to manage the activities surrounding

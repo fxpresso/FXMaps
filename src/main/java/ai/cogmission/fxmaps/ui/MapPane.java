@@ -2,6 +2,7 @@ package ai.cogmission.fxmaps.ui;
 
 import java.util.List;
 
+import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
@@ -16,7 +17,6 @@ import ai.cogmission.fxmaps.event.MapEventHandler;
 import ai.cogmission.fxmaps.event.MapEventType;
 import ai.cogmission.fxmaps.event.MapInitializedListener;
 import ai.cogmission.fxmaps.event.MapReadyListener;
-import ai.cogmission.fxmaps.event.RouteAlreadyExistsException;
 import ai.cogmission.fxmaps.model.DirectionsRoute;
 import ai.cogmission.fxmaps.model.LatLon;
 import ai.cogmission.fxmaps.model.Locator;
@@ -26,6 +26,7 @@ import ai.cogmission.fxmaps.model.Marker;
 import ai.cogmission.fxmaps.model.MarkerOptions;
 import ai.cogmission.fxmaps.model.MarkerType;
 import ai.cogmission.fxmaps.model.Route;
+import ai.cogmission.fxmaps.model.RouteStore;
 import ai.cogmission.fxmaps.model.Waypoint;
 
 import com.lynden.gmapsfx.GoogleMapView;
@@ -48,6 +49,7 @@ public class MapPane extends BorderPane implements Map {
     protected DirectionsPane directionsPane;
     
     protected Route currentRoute;
+    protected RouteStore routeStore;
     protected boolean isRouteSimMode;
     
     /**
@@ -59,6 +61,8 @@ public class MapPane extends BorderPane implements Map {
         
         mapComponent = new GoogleMapView();
         mapComponent.addMapInializedListener(this);
+        
+        routeStore = new RouteStore();
         
         directionsPane = new DirectionsPane();
         directionsPane.setPrefWidth(200);
@@ -140,11 +144,23 @@ public class MapPane extends BorderPane implements Map {
                 System.out.println("clicked: " + ll.getLatitude() + ", " + ll.getLongitude());
             
                 if(currentRoute == null) {
-                    
+                    currentRoute = new Route("test");
+                    routeStore.addRoute(currentRoute);
                 }
                 Marker marker = new Marker(opts);
                 currentRoute.add(new Waypoint(newLL, marker));
                 addMarker(marker);
+                
+                routeStore.store();
+                
+                (new Thread() {
+                    public void run() {
+                        try { Thread.sleep(5000); }catch(Exception e) {e.printStackTrace();}
+                        Platform.runLater(() -> {
+                            RouteStore.load();
+                        });
+                    }
+                }).start();
             }
         });
     }

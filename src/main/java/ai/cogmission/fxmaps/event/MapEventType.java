@@ -1,5 +1,7 @@
 package ai.cogmission.fxmaps.event;
 
+import javafx.scene.web.WebView;
+
 import com.lynden.gmapsfx.javascript.event.UIEventType;
 
 /**

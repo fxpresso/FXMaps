@@ -1,5 +1,7 @@
 package ai.cogmission.fxmaps.event;
 
+import ai.cogmission.fxmaps.model.Route;
+
 /**
  * Indicates that a {@link Route} with the attempted name
  * already exists.

@@ -1,5 +1,9 @@
 package ai.cogmission.fxmaps.model;
 
+import javafx.application.Platform;
+
+import com.google.gson.annotations.SerializedName;
+
 
 /**
  * Stores display properties for a given {@link Marker}.
@@ -10,32 +14,22 @@ package ai.cogmission.fxmaps.model;
  */
 public class MarkerOptions implements MapObject {
     private com.lynden.gmapsfx.javascript.object.MarkerOptions options;
-    
-    private boolean isExternal;
     private LatLon position;
     private String title;
-    private boolean isVisible;
+    private boolean visible;
+    @SerializedName("icon")
     private String iconPath;
     private Animation animation = Animation.NULL;
     
     public MarkerOptions() {
-        this(false);
-    }
-
-    public MarkerOptions(boolean isExternal) {
-        this.isExternal = isExternal;
-        if(!isExternal) {
+        if(Platform.isFxApplicationThread()) {
             options = new com.lynden.gmapsfx.javascript.object.MarkerOptions();
         }
     }
-    
-    public boolean isExternal() {
-        return isExternal;
-    }
-    
+
     public MarkerOptions position(LatLon ll) {
         this.position = ll;
-        if(!isExternal) {
+        if(Platform.isFxApplicationThread()) {
             options.position(ll.toLatLong());
         }
         return this;
@@ -47,7 +41,7 @@ public class MarkerOptions implements MapObject {
     
     public MarkerOptions title(String title) {
         this.title = title;
-        if(!isExternal) {
+        if(Platform.isFxApplicationThread()) {
             options.title(title);
         }
         return this;
@@ -58,20 +52,20 @@ public class MarkerOptions implements MapObject {
     }
     
     public MarkerOptions visible(Boolean visible) {
-        this.isVisible = visible;
-        if(!isExternal) {
+        this.visible = visible;
+        if(Platform.isFxApplicationThread()) {
             options.visible(visible);
         }
         return this;
     }
     
     public boolean isVisible() {
-        return isVisible;
+        return visible;
     }
     
     public MarkerOptions icon(String iconPath) {
         this.iconPath = iconPath;
-        if(!isExternal) {
+        if(Platform.isFxApplicationThread()) {
             options.icon(iconPath);
         }
         return this;
@@ -83,7 +77,7 @@ public class MarkerOptions implements MapObject {
     
     public MarkerOptions animation(Animation animation) {
         this.animation = animation;
-        if(!isExternal) {
+        if(Platform.isFxApplicationThread()) {
             options.animation(animation.convert());
         }
         return this;
@@ -94,10 +88,12 @@ public class MarkerOptions implements MapObject {
     }
     
     public void createUnderlying() {
+        position = new LatLon(position.getLatitude(), position.getLongitude());
+        
         options = new com.lynden.gmapsfx.javascript.object.MarkerOptions()
             .title(title)
             .position(position.toLatLong())
-            .visible(isVisible);
+            .visible(visible);
         if(animation != null) {
             options.animation(animation.convert());
         }

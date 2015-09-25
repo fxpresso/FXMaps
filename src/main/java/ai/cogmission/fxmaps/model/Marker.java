@@ -1,5 +1,9 @@
 package ai.cogmission.fxmaps.model;
 
+import javafx.application.Platform;
+
+import com.google.gson.annotations.SerializedName;
+
 /**
  * Map object pointer display
  * 
@@ -12,12 +16,14 @@ public class Marker implements MapObject {
     
     private String title;
     private Animation animation = Animation.NULL;
+    
+    @SerializedName("markerOptions")
     private MarkerOptions options;
     
     public Marker(MarkerOptions options) {
         this.options = options;
         this.title = options.getTitle();
-        if(!options.isExternal()) {
+        if(Platform.isFxApplicationThread()) {
             this.marker = new com.lynden.gmapsfx.javascript.object.Marker(options.convert());
         }
     }
@@ -61,6 +67,14 @@ public class Marker implements MapObject {
      */
     public MarkerOptions getMarkerOptions() {
         return options;
+    }
+    
+    /**
+     * Creates the underlying javascript peers
+     */
+    public void createUnderlying() {
+        options.createUnderlying();
+        this.marker = new com.lynden.gmapsfx.javascript.object.Marker(options.convert());
     }
     
     /**

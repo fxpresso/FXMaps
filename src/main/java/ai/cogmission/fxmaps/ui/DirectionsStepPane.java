@@ -3,7 +3,6 @@ package ai.cogmission.fxmaps.ui;
 import java.util.ArrayList;
 import java.util.List;
 
-import ai.cogmission.fxmaps.model.Direction;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.HBox;
@@ -11,6 +10,7 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import ai.cogmission.fxmaps.model.Direction;
 
 
 /**

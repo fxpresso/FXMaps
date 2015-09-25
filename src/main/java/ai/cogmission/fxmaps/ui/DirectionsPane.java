@@ -2,9 +2,6 @@ package ai.cogmission.fxmaps.ui;
 
 import java.util.List;
 
-import ai.cogmission.fxmaps.model.DirectionsLeg;
-import ai.cogmission.fxmaps.model.DirectionsStep;
-import ai.cogmission.fxmaps.model.Waypoint;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
@@ -13,6 +10,10 @@ import javafx.scene.layout.BackgroundFill;
 import javafx.scene.layout.CornerRadii;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import ai.cogmission.fxmaps.model.DirectionsLeg;
+import ai.cogmission.fxmaps.model.DirectionsStep;
+import ai.cogmission.fxmaps.model.Route;
+import ai.cogmission.fxmaps.model.Waypoint;
 
 /**
  * Right pane which displays directions arranged in vertical panels for
