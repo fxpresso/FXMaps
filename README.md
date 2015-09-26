@@ -1,4 +1,7 @@
-<center><img src="http://metaware.us/images/fx-maps.png"></center> 
+<p align="center">
+<img src="http://metaware.us/images/fx-maps.png" alt="FXMaps">
+</p>
+
 
 **NOTE: Minimum JavaSE version is 1.8**
 
