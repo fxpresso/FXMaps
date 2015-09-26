@@ -32,5 +32,11 @@ I will keep its status up to date until I reach the point where I can start work
 * Implemented route persistence, added RouteStore
 * Added RouteStoreTest
 
+**(2015-09-26)**
+* Added route lines to waypoints! (still needs work)
+* Added MapOptions
+* Added basic MapShape capability (getting there...)
+
+
 ### Stay Tuned For More as this gets flushed out! :-)
 
