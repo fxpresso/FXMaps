@@ -24,6 +24,9 @@ I will keep its status up to date until I reach the point where I can start work
 * Prints out lat/lon of click to standard out
 * Prints out lat/lon to/from pixel conversion
 
+**(2015-09-25)**
+* Implemented route persistence, added RouteStore
+* Added RouteStoreTest
 
 ### Stay Tuned For More as this gets flushed out! :-)
 
