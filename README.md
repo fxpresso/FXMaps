@@ -1,4 +1,8 @@
-# FXMaps
+<p align="center">
+<img src="http://metaware.us/images/fx-maps.png" alt="FXMaps">
+</p>
+
+
 **NOTE: Minimum JavaSE version is 1.8**
 
 A new JavaFX Mapping API which allows you to embed Google Maps in your JavaFX application and combines two API's (GMapsFX and google-maps-services-java) to allow one to easily use functionality missing in both, such as:
