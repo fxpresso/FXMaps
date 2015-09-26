@@ -1,8 +1,8 @@
 package ai.cogmission.fxmaps.ui;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
@@ -23,10 +23,13 @@ import ai.cogmission.fxmaps.model.Location;
 import ai.cogmission.fxmaps.model.Locator;
 import ai.cogmission.fxmaps.model.MapObject;
 import ai.cogmission.fxmaps.model.MapOptions;
+import ai.cogmission.fxmaps.model.MapShape;
 import ai.cogmission.fxmaps.model.MapType;
 import ai.cogmission.fxmaps.model.Marker;
 import ai.cogmission.fxmaps.model.MarkerOptions;
 import ai.cogmission.fxmaps.model.MarkerType;
+import ai.cogmission.fxmaps.model.Polyline;
+import ai.cogmission.fxmaps.model.PolylineOptions;
 import ai.cogmission.fxmaps.model.Route;
 import ai.cogmission.fxmaps.model.RouteStore;
 import ai.cogmission.fxmaps.model.Waypoint;
@@ -50,7 +53,7 @@ public class MapPane extends BorderPane implements Map {
     protected GoogleMapView mapComponent;
     protected GoogleMap googleMap;
     
-    protected MapOptions userOptions;
+    protected MapOptions userMapOptions;
     
     protected DirectionsPane directionsPane;
     
@@ -98,7 +101,7 @@ public class MapPane extends BorderPane implements Map {
      */
     @Override
     public void setMapOptions(MapOptions options) {
-        this.userOptions = options;
+        this.userMapOptions = options;
     }
     
     /**
@@ -292,15 +295,51 @@ public class MapPane extends BorderPane implements Map {
      */
     @Override
     public void addWaypoint(Waypoint waypoint) {
-        currentRoute.add(waypoint);
+        currentRoute.addWaypoint(waypoint);
         addMarker(waypoint.getMarker());
+        
+        if(currentRoute.size() > 1) {
+            Polyline poly = new Polyline(new PolylineOptions()
+               .path(connectLastWaypoint())
+               .strokeColor("red")
+               .strokeWeight(2));
+            
+            currentRoute.addLine(poly);
+            
+            addShape(poly);
+        }
+        
         routeStore.store();
+    }
+    
+    private List<LatLon> connectLastWaypoint() {
+        List<LatLon> l = new ArrayList<>();
+        l.add(currentRoute.getWaypoint(currentRoute.size() - 2).getLatLon());
+        l.add(currentRoute.getWaypoint(currentRoute.size() - 1).getLatLon());
+        return l;
     }
 
     @Override
     public void removeWaypoint(Waypoint wayoint) {
         // TODO Auto-generated method stub
         
+    }
+    
+    /**
+     * Adds the specified {@link MapShape} to this {@code Map}
+     * 
+     * @param shape     the {@code MapShape} to add
+     */
+    public void addShape(MapShape shape) {
+        googleMap.addMapShape(shape.convert());
+    }
+    
+    /**
+     * Removes the specified {@link MapShape} from this {@code Map}
+     * @param shape     the {@code MapShape} to remove
+     */
+    public void removeShape(MapShape shape) {
+        googleMap.removeMapShape(shape.convert());
     }
     
     /**
@@ -452,7 +491,7 @@ public class MapPane extends BorderPane implements Map {
      * Creates the internal {@link GoogleMap} object
      */
     private void createGoogleMap() {
-        googleMap = mapComponent.createMap(userOptions == null ? 
-            DEFAULT_OPTIONS.convert() : userOptions.convert());
+        googleMap = mapComponent.createMap(userMapOptions == null ? 
+            DEFAULT_OPTIONS.convert() : userMapOptions.convert());
     }
 }

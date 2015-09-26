@@ -12,59 +12,69 @@ public abstract class MapShapeOptions<T extends MapShapeOptions<T>> {
     private boolean visible;
     private int zIndex;
     
-    
+    @SuppressWarnings("rawtypes")
+    public abstract com.lynden.gmapsfx.shapes.MapShapeOptions convert();
     
     @SuppressWarnings("unchecked")
     public T clickable(boolean clickable) {
         this.clickable = clickable;
+        convert().clickable(clickable);
         return (T)this;
     }
     
     @SuppressWarnings("unchecked")
     public T draggable(boolean draggable) {
         this.draggable = draggable;
+        convert().draggable(draggable);
         return (T)this;
     }
     
     @SuppressWarnings("unchecked")
     public T editable(boolean editable) {
         this.editable = editable;
+        convert().editable(editable);
         return (T)this;
     }
     
     @SuppressWarnings("unchecked")
     public T geodesic(boolean geodesic) {
         this.geodesic = geodesic;
+        convert().geodesic(geodesic);
         return (T)this;
     }
     
     @SuppressWarnings("unchecked")
     public T visible(boolean visible) {
         this.visible = visible;
+        convert().visible(visible);
         return (T)this;
     }
     
     @SuppressWarnings("unchecked")
     public T strokeOpacity(double strokeOpacity) {
         this.strokeOpacity = strokeOpacity;
+        convert().strokeOpacity(strokeOpacity);
         return (T)this;
     }
     
     @SuppressWarnings("unchecked")
     public T strokeWeight(double strokeWeight) {
         this.strokeWeight = strokeWeight;
+        convert().strokeWeight(strokeWeight);
         return (T)this;
     }
     
     @SuppressWarnings("unchecked")
     public T strokeColor(String strokeColor) {
         this.strokeColor = strokeColor;
+        convert().strokeColor(strokeColor);
         return (T)this;
     }
     
     @SuppressWarnings("unchecked")
     public T zIndex(int zIndex) {
         this.zIndex = zIndex;
+        convert().zIndex(zIndex);
         return (T)this;
     }
 

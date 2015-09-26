@@ -17,6 +17,7 @@ import ai.cogmission.fxmaps.model.DirectionsRoute;
 import ai.cogmission.fxmaps.model.LatLon;
 import ai.cogmission.fxmaps.model.MapObject;
 import ai.cogmission.fxmaps.model.MapOptions;
+import ai.cogmission.fxmaps.model.MapShape;
 import ai.cogmission.fxmaps.model.MapType;
 import ai.cogmission.fxmaps.model.Marker;
 import ai.cogmission.fxmaps.model.Route;
@@ -126,6 +127,17 @@ public interface Map extends MapComponentInitializedListener {
      * @see Waypoint
      */
     public void removeMarker(Marker marker);
+    /**
+     * Adds the specified {@link MapShape} to this {@code Map}
+     * 
+     * @param shape     the {@code MapShape} to add
+     */
+    public void addShape(MapShape shape);
+    /**
+     * Removes the specified {@link MapShape} from this {@code Map}
+     * @param shape     the {@code MapShape} to remove
+     */
+    public void removeShape(MapShape shape);
     /**
      * Creates a {@link Waypoint} which is a combination of a 
      * {@link LatLon} and a {@link Marker}. 

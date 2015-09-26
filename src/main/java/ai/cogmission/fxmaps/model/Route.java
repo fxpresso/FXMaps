@@ -47,7 +47,7 @@ public class Route {
      * Adds a {@link Waypoint} to this list
      * @param w
      */
-    public void add(Waypoint w) {
+    public void addWaypoint(Waypoint w) {
         if(observableDelegate.isEmpty()) {
             origin = w;
         }
@@ -59,14 +59,14 @@ public class Route {
      * Removes the specified {@link Waypoint} from this list.
      * @param w
      */
-    public void remove(Waypoint w) {
+    public void removeWaypoint(Waypoint w) {
         observableDelegate.remove(w);
     }
     
     /**
      * Removes all {@link Waypoint}s from this list.
      */
-    public void removeAll() {
+    public void removeAllWaypoints() {
         observableDelegate.clear();
     }
     
@@ -78,7 +78,7 @@ public class Route {
      * @return  the element at the specified index.
      * @throws  IndexOutOfBoundsException if index > size - 1
      */
-    public Waypoint get(int index) {
+    public Waypoint getWaypoint(int index) {
         return observableDelegate.get(index);
     }
     
@@ -89,7 +89,7 @@ public class Route {
      * @param index     the index to add the specified Waypoint
      * @param w         the Waypoint to add
      */
-    public void add(int index, Waypoint w) {
+    public void addWaypoint(int index, Waypoint w) {
         observableDelegate.add(index, w);
     }
     
@@ -119,7 +119,7 @@ public class Route {
      * @param index     the index to set
      * @param w         the Waypoint to set at the specified index.
      */
-    public void set(int index, Waypoint w) {
+    public void setWaypoint(int index, Waypoint w) {
         observableDelegate.set(index, w);
     }
     
@@ -156,19 +156,35 @@ public class Route {
     
     /**
      * Adds a {@link Polyline} to this {@code Route}
-     * @param line
+     * @param line  the line to add
      */
     public void addLine(Polyline line) {
         lines.add(line);
     }
     
     /**
+     * Removes the specified {@link Polyline} from this {@code Route}
+     * @param line  the line to remove
+     */
+    public void removeLine(Polyline line) {
+        lines.remove(line);
+    }
+    
+    /**
      * Returns the list of {@link Polylines} which make up the legs
      * between {@link Waypoints}
-     * @return
+     * @return  the list of lines
      */
     public List<Polyline> getLines() {
         return lines;
+    }
+    
+    /**
+     * Returns the number of {@link Waypoint}s in this {@code Route}
+     * @return  the number of Waypoints
+     */
+    public int size() {
+        return observableDelegate.size();
     }
     
     /**

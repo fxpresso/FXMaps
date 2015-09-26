@@ -20,7 +20,6 @@ public class PolylineOptions extends MapShapeOptions<PolylineOptions> {
         }
     }
     
-    
     /**
      * Sets the list of lat/lon points on this {@code PolylineOptions}
      * @param pathPoints    the list of points

@@ -3,7 +3,7 @@ package ai.cogmission.fxmaps.model;
 import javafx.application.Platform;
 
 
-public class Polyline {
+public class Polyline extends MapShape {
     private com.lynden.gmapsfx.shapes.Polyline line;
     
     private PolylineOptions options;

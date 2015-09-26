@@ -41,7 +41,7 @@ public class RouteStoreTest {
                 .icon(MarkerType.GREEN.nextPath())
                 .visible(true);
             Waypoint w = new Waypoint(ll, new Marker(opts));
-            r.add(w);
+            r.addWaypoint(w);
             
             ll = new LatLon(20, -15);
             opts = new MarkerOptions()
@@ -50,7 +50,7 @@ public class RouteStoreTest {
                 .icon(MarkerType.GREEN.nextPath())
                 .visible(true);
             w = new Waypoint(ll, new Marker(opts));
-            r.add(w);
+            r.addWaypoint(w);
             
             ll = new LatLon(20, -10);
             opts = new MarkerOptions()
@@ -59,7 +59,7 @@ public class RouteStoreTest {
                 .icon(MarkerType.GREEN.nextPath())
                 .visible(true);
             w = new Waypoint(ll, new Marker(opts));
-            r.add(w);
+            r.addWaypoint(w);
             
             ////////////// 2nd Route //////////////
             MarkerType.reset(); //Reset Marker Names
@@ -72,7 +72,7 @@ public class RouteStoreTest {
                 .icon(MarkerType.GREEN.nextPath())
                 .visible(true);
             Waypoint w2 = new Waypoint(ll2, new Marker(opts2));
-            r2.add(w2);
+            r2.addWaypoint(w2);
             
             ll2 = new LatLon(40, -35);
             opts2 = new MarkerOptions()
@@ -81,7 +81,7 @@ public class RouteStoreTest {
                 .icon(MarkerType.GREEN.nextPath())
                 .visible(true);
             w2 = new Waypoint(ll2, new Marker(opts2));
-            r2.add(w2);
+            r2.addWaypoint(w2);
             
             ll2 = new LatLon(40, -30);
             opts2 = new MarkerOptions()
@@ -90,7 +90,7 @@ public class RouteStoreTest {
                 .icon(MarkerType.GREEN.nextPath())
                 .visible(true);
             w2 = new Waypoint(ll2, new Marker(opts2));
-            r2.add(w2);
+            r2.addWaypoint(w2);
             
             RouteStore store = new RouteStore();
             store.addRoute(r);
@@ -141,7 +141,7 @@ public class RouteStoreTest {
                 .icon(MarkerType.GREEN.nextPath())
                 .visible(true);
             Waypoint w = new Waypoint(ll1, new Marker(opts));
-            r.add(w);
+            r.addWaypoint(w);
             
             LatLon ll2 = new LatLon(20, -15);
             opts = new MarkerOptions()
@@ -150,7 +150,7 @@ public class RouteStoreTest {
                 .icon(MarkerType.GREEN.nextPath())
                 .visible(true);
             w = new Waypoint(ll2, new Marker(opts));
-            r.add(w);
+            r.addWaypoint(w);
             
             List<LatLon> latLons = new ArrayList<LatLon>();
             latLons.add(ll1);
@@ -168,7 +168,7 @@ public class RouteStoreTest {
                 .icon(MarkerType.GREEN.nextPath())
                 .visible(true);
             w = new Waypoint(ll3, new Marker(opts));
-            r.add(w);
+            r.addWaypoint(w);
             
             latLons = new ArrayList<LatLon>();
             latLons.add(ll2);
@@ -190,7 +190,7 @@ public class RouteStoreTest {
                 .icon(MarkerType.GREEN.nextPath())
                 .visible(true);
             Waypoint w2 = new Waypoint(ll4, new Marker(opts2));
-            r2.add(w2);
+            r2.addWaypoint(w2);
             
             LatLon ll5 = new LatLon(40, -35);
             opts2 = new MarkerOptions()
@@ -199,7 +199,7 @@ public class RouteStoreTest {
                 .icon(MarkerType.GREEN.nextPath())
                 .visible(true);
             w2 = new Waypoint(ll5, new Marker(opts2));
-            r2.add(w2);
+            r2.addWaypoint(w2);
             
             latLons = new ArrayList<LatLon>();
             latLons.add(ll4);
@@ -217,7 +217,7 @@ public class RouteStoreTest {
                 .icon(MarkerType.GREEN.nextPath())
                 .visible(true);
             w2 = new Waypoint(ll6, new Marker(opts2));
-            r2.add(w2);
+            r2.addWaypoint(w2);
             
             latLons = new ArrayList<LatLon>();
             latLons.add(ll5);
