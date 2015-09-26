@@ -24,6 +24,8 @@ public class Route {
     @SerializedName("waypoints")
     private List<Waypoint> delegate = new ArrayList<>();
     
+    private List<Polyline> lines = new ArrayList<>();
+    
     private String name;
     private Waypoint origin;
     private Waypoint destination;
@@ -150,6 +152,23 @@ public class Route {
      */
     public List<Waypoint> getWaypoints() {
         return observableDelegate;
+    }
+    
+    /**
+     * Adds a {@link Polyline} to this {@code Route}
+     * @param line
+     */
+    public void addLine(Polyline line) {
+        lines.add(line);
+    }
+    
+    /**
+     * Returns the list of {@link Polylines} which make up the legs
+     * between {@link Waypoints}
+     * @return
+     */
+    public List<Polyline> getLines() {
+        return lines;
     }
     
     /**

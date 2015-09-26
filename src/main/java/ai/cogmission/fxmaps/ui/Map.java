@@ -16,13 +16,14 @@ import ai.cogmission.fxmaps.event.RouteAlreadyExistsException;
 import ai.cogmission.fxmaps.model.DirectionsRoute;
 import ai.cogmission.fxmaps.model.LatLon;
 import ai.cogmission.fxmaps.model.MapObject;
+import ai.cogmission.fxmaps.model.MapOptions;
 import ai.cogmission.fxmaps.model.MapType;
 import ai.cogmission.fxmaps.model.Marker;
 import ai.cogmission.fxmaps.model.Route;
+import ai.cogmission.fxmaps.model.RouteStore;
 import ai.cogmission.fxmaps.model.Waypoint;
 
 import com.lynden.gmapsfx.MapComponentInitializedListener;
-import com.lynden.gmapsfx.javascript.object.MapOptions;
 
 
 
@@ -42,6 +43,23 @@ public interface Map extends MapComponentInitializedListener {
         map.setDirectionsVisible(true);
         return map;
     }
+    /**
+     * Creates and initializes child components to prepare the map
+     * for immediate use. when the {@link Map} is initialized it is 
+     * given two call backs which when called, indicate that the map
+     * is ready for use. 
+     * 
+     * Before this method is called, any desired {@link MapOptions} must
+     * be set on the map before calling {@code #initialize()} 
+     */
+    public void initialize();
+    /**
+     * Specifies the {@link MapOptions} to use. <em>Note</em> this must
+     * be set prior to calling {@link #initialize()}
+     * 
+     * @param mapOptions    the {@code MapOptions} to use.
+     */
+    public void setMapOptions(MapOptions mapOptions);
     /**
      * Returns the MapPane Node
      * @return
@@ -141,13 +159,20 @@ public interface Map extends MapComponentInitializedListener {
      * @throws RouteAlreadyExistsException  if a Route by the specified name already exists.
      */
     public static Route createRoute(String name) throws RouteAlreadyExistsException {
-        
         Route r = new Route(name);
         return r;
     }
     
-    public static void checkRoute(String name) throws RouteAlreadyExistsException {
-        
+    /**
+     * Returns a flag indicating whether the specified route exists or not.
+     * 
+     * @param store         the {@link RouteStore} to check
+     * @param routeName     the route name to match
+     * @return  true if route name exists in the specified store, false if not.
+     * @throws RouteAlreadyExistsException
+     */
+    public static boolean checkRouteExists(RouteStore store, String routeName) throws RouteAlreadyExistsException {
+        return store.getRoutes().parallelStream().filter(r -> r.getName().equals(routeName)).findAny().get() != null;
     }
     
     /**
@@ -199,6 +224,27 @@ public interface Map extends MapComponentInitializedListener {
      * @param handler       the handler to be notified.
      */
     public void addMapEventHandler(MapEventType eventType, MapEventHandler handler);
+    /**
+     * Removes the default handler which:
+     * <ol>
+     *     <li>Checks to see if "routeSimulationMode" is true (see {@link #setRouteSimulationMode(boolean)})
+     *     <li> if routeSimulationMode is true, and the user left-clicked the map, a Waypoint will be added
+     *     to either a route named "temp" or if {@link #setCurrentRoute} has been called with a valid Route, 
+     *     it will be added to that current {@link Route}
+     *     <li> if routeSimulationMode is false, nothing happens.
+     * </ol>
+     * 
+     * <em>WARNING: To guarantee consistency, this MUST be called before {@link Map#initialize()} is called or 
+     * else this has no effect</em>
+     */
+    public void removeDefaultMapEventHandler();
+    /**
+     * Sets the current {@link Route} to which {@link #addWaypoint(Waypoint)} will add a waypoint.
+     * Routes may be created by calling {@link Map#createRoute(String)} with a unique name.
+     * 
+     * @param r        the {@code Route} make current.
+     */
+    public void setCurrentRoute(Route r);
     /**
      * Adds a {@link MapObject} JavaScript peer to the map object's DOM.
      * @param mapObject

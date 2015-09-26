@@ -1,11 +1,15 @@
 package ai.cogmission.fxmaps.demo;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.scene.Scene;
 import javafx.scene.control.Separator;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
 import javafx.stage.Stage;
+import ai.cogmission.fxmaps.model.LatLon;
+import ai.cogmission.fxmaps.model.MapOptions;
+import ai.cogmission.fxmaps.model.MapType;
 import ai.cogmission.fxmaps.ui.Map;
 
 /**
@@ -23,6 +27,7 @@ public class RefImpl extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         map = Map.create();
+        map.initialize();
         createToolBar();
         configureToolBar();
         Scene scene = new Scene(map.getNode(), Map.DEFAULT_WIDTH, Map.DEFAULT_HEIGHT);
@@ -35,7 +40,7 @@ public class RefImpl extends Application {
      */
     public void createToolBar() {
         ToolBar toolBar = new ToolBar(
-            simulationBtn = new ToggleButton("Directions"),
+            simulationBtn = new ToggleButton("Sim Mode"),
             new Separator(),
             directionsBtn = new ToggleButton("Directions")
         );
@@ -50,6 +55,27 @@ public class RefImpl extends Application {
         simulationBtn.setOnAction(e -> map.setRouteSimulationMode(simulationBtn.isSelected()));
         directionsBtn.setOnAction(e -> map.setDirectionsVisible(directionsBtn.isSelected()));
         directionsBtn.setSelected(true);
+    }
+    
+    /**
+     * Demonstrates how to set custom {@link MapOptions}
+     */
+    public void configureOptions() {
+        LatLon center = new LatLon(41.91073, -87.71332000000001);
+        MapOptions options = new MapOptions();
+        options.mapMarker(true)
+            .center(center)
+            .zoom(15)
+            .overviewMapControl(false)
+            .panControl(false)
+            .rotateControl(false)
+            .scaleControl(false)
+            .streetViewControl(false)
+            .zoomControl(false)
+            .mapTypeControl(false)
+            .mapType(MapType.ROADMAP);
+        
+        map.setMapOptions(options);
     }
     
     /**

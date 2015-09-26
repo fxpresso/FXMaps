@@ -23,7 +23,9 @@ public class RouteStore {
      * @param r     the route to add
      */
     public void addRoute(Route r) {
-        routes.add(r);
+        if(!routes.contains(r)) {
+            routes.add(r);
+        }
     }
     
     /**
