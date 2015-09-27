@@ -99,7 +99,7 @@ public class RouteStoreTest {
             String json = store.store();
             
             assertNotNull(json);
-            assertEquals(7073, json.length());
+            assertEquals(7397, json.length());
             
             //////////// Load /////////////
             
@@ -235,7 +235,7 @@ public class RouteStoreTest {
             String json = store.store();
             
             assertNotNull(json);
-            assertEquals(9199, json.length());
+            assertEquals(9523, json.length());
             
             //////////// Load /////////////
             

@@ -12,6 +12,8 @@ public class Waypoint {
     private LatLon latLon;
     private Marker marker;
     
+    private Polyline connection;
+    
     
     /**
      * Constructs a new {@code Waypoint}
@@ -37,6 +39,24 @@ public class Waypoint {
      */
     public Marker getMarker() {
         return marker;
+    }
+    
+    /**
+     * Adds the specified {@link Polyline} which connects 
+     * (The line that proceeds this waypoint) this waypoint.
+     * 
+     * @param line
+     */
+    public void setConnection(Polyline line) {
+        this.connection = line;
+    }
+    
+    /**
+     * Returns the {@link Polyline} which proceed this waypoint.
+     * @return
+     */
+    public Polyline getConnection() {
+        return connection;
     }
     
 }

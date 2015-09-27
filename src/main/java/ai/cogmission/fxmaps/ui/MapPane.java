@@ -24,6 +24,7 @@ import ai.cogmission.fxmaps.model.Locator;
 import ai.cogmission.fxmaps.model.MapObject;
 import ai.cogmission.fxmaps.model.MapOptions;
 import ai.cogmission.fxmaps.model.MapShape;
+import ai.cogmission.fxmaps.model.MapShapeOptions;
 import ai.cogmission.fxmaps.model.MapType;
 import ai.cogmission.fxmaps.model.Marker;
 import ai.cogmission.fxmaps.model.MarkerOptions;
@@ -46,7 +47,8 @@ import com.lynden.gmapsfx.javascript.object.LatLong;
  *
  */
 public class MapPane extends BorderPane implements Map {
-    private static final MapOptions DEFAULT_OPTIONS = getDefaultOptions();
+    private static final MapOptions DEFAULT_MAP_OPTIONS = getMapDefaultOptions();
+    private static final PolylineOptions DEFAULT_POLYLINE_OPTIONS = getDefaultPolylineOptions();
     private final MapEventHandler DEFAULT_MAPEVENT_HANDLER = getDefaultMapEventHandler();
     private boolean defaultMapEventHandlerInstalled = true;
     
@@ -299,24 +301,57 @@ public class MapPane extends BorderPane implements Map {
         addMarker(waypoint.getMarker());
         
         if(currentRoute.size() > 1) {
-            Polyline poly = new Polyline(new PolylineOptions()
-               .path(connectLastWaypoint())
-               .strokeColor("red")
-               .strokeWeight(2));
-            
-            currentRoute.addLine(poly);
-            
+            Polyline poly = connectLastWaypoint(waypoint, null);
             addShape(poly);
         }
         
         routeStore.store();
     }
     
-    private List<LatLon> connectLastWaypoint() {
+    /**
+     * Adds a {@link Waypoint} to the map connecting it to any 
+     * previously added {@code Waypoint}s by a connecting line,
+     * as opposed to adding a {@link Marker} which doesn't add 
+     * a line. 
+     * 
+     * @param waypoint  the {@link Waypoint} to be added.
+     * @param options   the subclass of {@link MapShapeOptions} containing desired
+     *                  properties of the rendering operation.
+     * @see #addMarker(Marker)
+     * @see #addWaypoint(Waypoint)
+     */
+    public <T extends MapShapeOptions<T>>void addWaypoint(Waypoint waypoint, T options) {
+        currentRoute.addWaypoint(waypoint);
+        addMarker(waypoint.getMarker());
+        
+        if(currentRoute.size() > 1) {
+            Polyline poly = connectLastWaypoint(waypoint, options);
+            addShape(poly);
+        }
+        
+        routeStore.store();
+    }
+    
+    /**
+     * Returns the {@link Polyline} which connects the specified {@link Waypoint}
+     * @return  the connecting Polyline
+     */
+    private <T extends MapShapeOptions<T>> Polyline connectLastWaypoint(Waypoint lastWaypoint, T options) {
         List<LatLon> l = new ArrayList<>();
         l.add(currentRoute.getWaypoint(currentRoute.size() - 2).getLatLon());
         l.add(currentRoute.getWaypoint(currentRoute.size() - 1).getLatLon());
-        return l;
+        
+        Polyline poly = new Polyline(options == null ? 
+            DEFAULT_POLYLINE_OPTIONS.path(l) : 
+                new PolylineOptions()
+                    .path(l)
+                    .strokeColor("red")
+                    .strokeWeight(2));
+     
+        lastWaypoint.setConnection(poly);
+     
+        currentRoute.addLine(poly);
+        return poly;
     }
 
     @Override
@@ -446,10 +481,21 @@ public class MapPane extends BorderPane implements Map {
     }
     
     /**
+     * Return some default {@link PolylineOptions}
+     * 
+     * @return      the constructed options
+     */
+    private static PolylineOptions getDefaultPolylineOptions() {
+        return new PolylineOptions()
+            .strokeColor("red")
+            .strokeWeight(2);
+    }
+    
+    /**
      * Returns the default {@link MapOptions}
      * @return  the default MapOptions
      */
-    private static MapOptions getDefaultOptions() {
+    private static MapOptions getMapDefaultOptions() {
         MapOptions options = new MapOptions();
         options.mapMarker(true)
             .zoom(15)
@@ -492,6 +538,6 @@ public class MapPane extends BorderPane implements Map {
      */
     private void createGoogleMap() {
         googleMap = mapComponent.createMap(userMapOptions == null ? 
-            DEFAULT_OPTIONS.convert() : userMapOptions.convert());
+            DEFAULT_MAP_OPTIONS.convert() : userMapOptions.convert());
     }
 }

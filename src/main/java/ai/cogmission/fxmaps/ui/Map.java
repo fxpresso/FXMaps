@@ -18,6 +18,7 @@ import ai.cogmission.fxmaps.model.LatLon;
 import ai.cogmission.fxmaps.model.MapObject;
 import ai.cogmission.fxmaps.model.MapOptions;
 import ai.cogmission.fxmaps.model.MapShape;
+import ai.cogmission.fxmaps.model.MapShapeOptions;
 import ai.cogmission.fxmaps.model.MapType;
 import ai.cogmission.fxmaps.model.Marker;
 import ai.cogmission.fxmaps.model.Route;
@@ -155,7 +156,20 @@ public interface Map extends MapComponentInitializedListener {
      * @param waypoint  the {@link Waypoint} to be added.
      * @see #addMarker(Marker)
      */
-    public void addWaypoint(Waypoint waypoint); // Was addRouteMarker()
+    public void addWaypoint(Waypoint waypoint);
+    /**
+     * Adds a {@link Waypoint} to the map connecting it to any 
+     * previously added {@code Waypoint}s by a connecting line,
+     * as opposed to adding a {@link Marker} which doesn't add 
+     * a line. 
+     * 
+     * @param waypoint  the {@link Waypoint} to be added.
+     * @param options   the subclass of {@link MapShapeOptions} containing desired
+     *                  properties of the rendering operation.
+     * @see #addMarker(Marker)
+     * @see #addWaypoint(Waypoint)
+     */
+    public <T extends MapShapeOptions<T>>void addWaypoint(Waypoint waypoint, T options);
     /**
      * Removes the {@link Waypoint} from the map and its connecting line.
      * 
