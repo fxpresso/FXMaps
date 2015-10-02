@@ -12,23 +12,28 @@ import ai.cogmission.fxmaps.event.MapEventHandler;
 import ai.cogmission.fxmaps.event.MapEventType;
 import ai.cogmission.fxmaps.event.MapInitializedListener;
 import ai.cogmission.fxmaps.event.MapReadyListener;
-import ai.cogmission.fxmaps.event.RouteAlreadyExistsException;
+import ai.cogmission.fxmaps.exception.RouteAlreadyExistsException;
 import ai.cogmission.fxmaps.model.DirectionsRoute;
 import ai.cogmission.fxmaps.model.LatLon;
 import ai.cogmission.fxmaps.model.MapObject;
 import ai.cogmission.fxmaps.model.MapOptions;
 import ai.cogmission.fxmaps.model.MapShape;
 import ai.cogmission.fxmaps.model.MapShapeOptions;
+import ai.cogmission.fxmaps.model.MapStore;
 import ai.cogmission.fxmaps.model.MapType;
 import ai.cogmission.fxmaps.model.Marker;
 import ai.cogmission.fxmaps.model.Route;
-import ai.cogmission.fxmaps.model.RouteStore;
 import ai.cogmission.fxmaps.model.Waypoint;
 
 import com.lynden.gmapsfx.MapComponentInitializedListener;
 
 
-
+/**
+ * Designates all public methods on {@code Map}s.
+ * 
+ * @author cogmission
+ * @see MapPane
+ */
 public interface Map extends MapComponentInitializedListener {
     public static final double DEFAULT_WIDTH = 1000;
     public static final double DEFAULT_HEIGHT = 780;
@@ -36,15 +41,44 @@ public interface Map extends MapComponentInitializedListener {
     /**
      * Factory method to create and return a {@code Map} 
      * 
-     * @return  a map
+     * <p>
+     * To create a MapPane:
+     * <br><br>
+     * 1. Map map = Map.create("My Map Name");
+     * <br>--or--<br>
+     * 2. MapPane map = Map.create("My Map Name");
+     * <br><br>
+     * 
+     * To call JavaFX Node methods on the {@link MapPane} (such as setting width and height), use option 2.
+     * or cast the {@code Map} to {@link MapPane} at some later time.
+     * 
+     * The return type may be typed as either a Map or MapPane.
+     * 
+     * @return  a {@code Map} 
      */
-    public static Map create() {
+    @SuppressWarnings("unchecked")
+    public static <T extends MapPane> T create() {
         MapPane map = new MapPane();
         map.getNode().setPrefWidth(Map.DEFAULT_WIDTH);
         map.getNode().setPrefHeight(Map.DEFAULT_HEIGHT);
         map.setDirectionsVisible(true);
-        return map;
+        
+        return (T)map;
     }
+    
+    public default void addMap(String mapName) {
+        getMapStore().addMap(mapName);
+    }
+    
+    /**
+     * Returns this instance's {@link MapStore}
+     * @return  the map store for this instance
+     */
+    public MapStore getMapStore(); 
+    /**
+     * 
+     * @param name
+     */
     /**
      * Creates and initializes child components to prepare the map
      * for immediate use. when the {@link Map} is initialized it is 
@@ -55,6 +89,12 @@ public interface Map extends MapComponentInitializedListener {
      * be set on the map before calling {@code #initialize()} 
      */
     public void initialize();
+    /**
+     * Returns the {@link MapOptions} set on this {@code Map}
+     * 
+     * @return  this {@code Map}'s {@link MapOptions}
+     */
+    public MapOptions getMapOptions();
     /**
      * Specifies the {@link MapOptions} to use. <em>Note</em> this must
      * be set prior to calling {@link #initialize()}
@@ -156,20 +196,26 @@ public interface Map extends MapComponentInitializedListener {
      * @param waypoint  the {@link Waypoint} to be added.
      * @see #addMarker(Marker)
      */
-    public void addWaypoint(Waypoint waypoint);
+    public void addNewWaypoint(Waypoint waypoint);
     /**
      * Adds a {@link Waypoint} to the map connecting it to any 
      * previously added {@code Waypoint}s by a connecting line,
      * as opposed to adding a {@link Marker} which doesn't add 
      * a line. 
      * 
-     * @param waypoint  the {@link Waypoint} to be added.
-     * @param options   the subclass of {@link MapShapeOptions} containing desired
+     * @param waypoint          the {@link Waypoint} to be added.
+     * @param polylineOptions   the subclass of {@link MapShapeOptions} containing desired
      *                  properties of the rendering operation.
      * @see #addMarker(Marker)
-     * @see #addWaypoint(Waypoint)
+     * @see #addNewWaypoint(Waypoint)
      */
-    public <T extends MapShapeOptions<T>>void addWaypoint(Waypoint waypoint, T options);
+    public <T extends MapShapeOptions<T>>void addNewWaypoint(Waypoint waypoint, T polylineOptions);
+    /**
+     * Adds a {@link Waypoint} from the {@link MapStore} when the specified
+     * Waypoint is already part of a {@link Route} and already has connecting leg lines.
+     * @param waypoint     the Waypoint to add
+     */
+    public void addWaypoint(Waypoint point);
     /**
      * Removes the {@link Waypoint} from the map and its connecting line.
      * 
@@ -192,12 +238,12 @@ public interface Map extends MapComponentInitializedListener {
     /**
      * Returns a flag indicating whether the specified route exists or not.
      * 
-     * @param store         the {@link RouteStore} to check
+     * @param store         the {@link MapStore} to check
      * @param routeName     the route name to match
      * @return  true if route name exists in the specified store, false if not.
      * @throws RouteAlreadyExistsException
      */
-    public static boolean checkRouteExists(RouteStore store, String routeName) throws RouteAlreadyExistsException {
+    public static boolean checkRouteExists(MapStore store, String routeName) throws RouteAlreadyExistsException {
         return store.getRoutes().parallelStream().filter(r -> r.getName().equals(routeName)).findAny().get() != null;
     }
     
@@ -265,7 +311,7 @@ public interface Map extends MapComponentInitializedListener {
      */
     public void removeDefaultMapEventHandler();
     /**
-     * Sets the current {@link Route} to which {@link #addWaypoint(Waypoint)} will add a waypoint.
+     * Sets the current {@link Route} to which {@link #addNewWaypoint(Waypoint)} will add a waypoint.
      * Routes may be created by calling {@link Map#createRoute(String)} with a unique name.
      * 
      * @param r        the {@code Route} make current.

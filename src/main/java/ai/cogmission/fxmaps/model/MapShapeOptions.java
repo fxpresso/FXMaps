@@ -15,7 +15,7 @@ public abstract class MapShapeOptions<T extends MapShapeOptions<T>> {
     private boolean editable;
     private boolean geodesic;
     private String strokeColor;
-    private double strokeOpacity;
+    private double strokeOpacity = 1.0;
     private double strokeWeight;
     private boolean visible;
     private int zIndex;

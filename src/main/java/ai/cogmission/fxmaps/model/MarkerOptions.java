@@ -88,21 +88,52 @@ public class MarkerOptions implements MapObject {
     }
     
     public void createUnderlying() {
-        position = new LatLon(position.getLatitude(), position.getLongitude());
-        
-        options = new com.lynden.gmapsfx.javascript.object.MarkerOptions()
-            .title(title)
-            .position(position.toLatLong())
-            .visible(visible);
-        if(animation != null) {
-            options.animation(animation.convert());
-        }
-        if(iconPath != null) {
-            options.icon(iconPath);
+        if(Platform.isFxApplicationThread()) {
+            options = new com.lynden.gmapsfx.javascript.object.MarkerOptions()
+                .title(title)
+                .position(position.toLatLong())
+                .visible(visible);
+            if(animation != null) {
+                options.animation(animation.convert());
+            }
+            if(iconPath != null) {
+                options.icon(iconPath);
+            }
         }
     }
     
     public com.lynden.gmapsfx.javascript.object.MarkerOptions convert() {
         return options;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((iconPath == null) ? 0 : iconPath.substring(0, iconPath.indexOf("_")).hashCode());
+        result = prime * result + ((position == null) ? 0 : position.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(this == obj)
+            return true;
+        if(obj == null)
+            return false;
+        if(getClass() != obj.getClass())
+            return false;
+        MarkerOptions other = (MarkerOptions)obj;
+        if(iconPath == null) {
+            if(other.iconPath != null)
+                return false;
+        } else if(!iconPath.substring(0, iconPath.indexOf("_")).equals(other.iconPath.substring(0, iconPath.indexOf("_"))))
+            return false;
+        if(position == null) {
+            if(other.position != null)
+                return false;
+        } else if(!position.equals(other.position))
+            return false;
+        return true;
     }
 }

@@ -1,4 +1,4 @@
-package ai.cogmission.fxmaps.event;
+package ai.cogmission.fxmaps.exception;
 
 import ai.cogmission.fxmaps.model.Route;
 

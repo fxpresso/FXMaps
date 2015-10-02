@@ -3,6 +3,7 @@ package ai.cogmission.fxmaps.model;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
@@ -10,6 +11,7 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.stream.MalformedJsonException;
 
 /**
  * Abstraction of a given path which connects a series of {@link Waypoint}s.
@@ -29,10 +31,14 @@ public class Route {
     private String name;
     private Waypoint origin;
     private Waypoint destination;
+    
+    private String id;
+    
 
     /** Constructs a new {@code Route} */
     public Route(String name) {
         this.name = name;
+        this.id = UUID.randomUUID().toString();
     }
     
     /**
@@ -41,6 +47,14 @@ public class Route {
      */
     public String getName() {
         return name;
+    }
+    
+    /**
+     * Returns this {@code Route}'s UUID in String form.
+     * @return  this {@code Route}'s UUID in String form.
+     */
+    public String getId() {
+        return id;
     }
     
     /**
@@ -195,7 +209,7 @@ public class Route {
      * @return  a list of {@link Waypoint}s minus the start and end
      */
     public List<Waypoint> getInterimWaypoints() {
-        if(observableDelegate.size() < 3) return Collections.emptyList();
+        if(observableDelegate == null || observableDelegate.size() < 3) return Collections.emptyList();
         
         List<Waypoint> retVal = new ArrayList<>(observableDelegate);
         retVal.remove(0);
@@ -215,18 +229,43 @@ public class Route {
      * list cannot be serialized using the current method, so we use a simple list
      * for serialization and then copy the data over, after deserialization.
      */
-    public void postDeserialize() {
+    public void postDeserialize() throws MalformedJsonException {
         observableDelegate = FXCollections.observableArrayList(delegate);
         delegate.clear();
         
         // If deserializing in non-headless mode, build javascript peers
         if(Platform.isFxApplicationThread()) {
+            if(origin == null || origin.getMarker() == null) {
+                throw new MalformedJsonException("Route had malformed origin");
+            }
+            
             origin.getMarker().createUnderlying();
             destination.getMarker().createUnderlying();
             for(Waypoint wp : observableDelegate) {
                 wp.getMarker().createUnderlying();
             }
+            
+            for(Polyline line : lines) {
+                line.createUnderlying();
+            }
         }
+    }
+    
+    /**
+     * Compares the specified {@code Route} with this Route using
+     * only their paths.
+     * 
+     * @param other     the other route to compare
+     * @return  true if both route paths are equal, false if not.
+     */
+    public boolean pathEquals(Route other) {
+        if(observableDelegate == null) {
+            if(other.observableDelegate != null)
+                return false;
+        } else if(!observableDelegate.equals(other.observableDelegate))
+            return false;
+        
+        return true;
     }
     
     @Override
@@ -234,4 +273,55 @@ public class Route {
         return "Route [name=" + name + ", origin=" + getOrigin() + ", destination=" + getDestination() + 
                 ", interim=" + getInterimWaypoints() + "]";
     }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((destination == null) ? 0 : destination.hashCode());
+        result = prime * result + ((id == null) ? 0 : id.hashCode());
+        result = prime * result + ((lines == null) ? 0 : lines.hashCode());
+        result = prime * result + ((observableDelegate == null) ? 0 : observableDelegate.hashCode());
+        result = prime * result + ((origin == null) ? 0 : origin.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(this == obj)
+            return true;
+        if(obj == null)
+            return false;
+        if(getClass() != obj.getClass())
+            return false;
+        Route other = (Route)obj;
+        if(destination == null) {
+            if(other.destination != null)
+                return false;
+        } else if(!destination.equals(other.destination))
+            return false;
+        if(id == null) {
+            if(other.id != null)
+                return false;
+        } else if(!id.equals(other.id))
+            return false;
+        if(lines == null) {
+            if(other.lines != null)
+                return false;
+        } else if(!lines.equals(other.lines))
+            return false;
+        if(observableDelegate == null) {
+            if(other.observableDelegate != null)
+                return false;
+        } else if(!observableDelegate.equals(other.observableDelegate))
+            return false;
+        if(origin == null) {
+            if(other.origin != null)
+                return false;
+        } else if(!origin.equals(other.origin))
+            return false;
+        return true;
+    }
+
+    
 }

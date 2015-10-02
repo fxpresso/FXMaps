@@ -73,8 +73,10 @@ public class Marker implements MapObject {
      * Creates the underlying javascript peers
      */
     public void createUnderlying() {
-        options.createUnderlying();
-        this.marker = new com.lynden.gmapsfx.javascript.object.Marker(options.convert());
+        if(Platform.isFxApplicationThread()) {
+            options.createUnderlying();
+            this.marker = new com.lynden.gmapsfx.javascript.object.Marker(options.convert());
+        }
     }
     
     /**
@@ -83,6 +85,31 @@ public class Marker implements MapObject {
      */
     public com.lynden.gmapsfx.javascript.object.Marker convert() {
         return marker;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((options == null) ? 0 : options.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(this == obj)
+            return true;
+        if(obj == null)
+            return false;
+        if(getClass() != obj.getClass())
+            return false;
+        Marker other = (Marker)obj;
+        if(options == null) {
+            if(other.options != null)
+                return false;
+        } else if(!options.equals(other.options))
+            return false;
+        return true;
     }
     
 }

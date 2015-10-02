@@ -11,5 +11,5 @@ package ai.cogmission.fxmaps.event;
  *
  */
 public interface MapReadyListener {
-    public void mapRead();
+    public void mapReady();
 }

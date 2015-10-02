@@ -16,7 +16,10 @@ import com.lynden.gmapsfx.javascript.IWebEngine;
 import com.lynden.gmapsfx.javascript.JavascriptRuntime;
 
 
-public class RouteStoreTest {
+public class MapStoreTest {
+    public void testLoadStoreSimple() {
+        
+    }
 
     @Test
     public void testStoreRoutes() {
@@ -92,19 +95,22 @@ public class RouteStoreTest {
             w2 = new Waypoint(ll2, new Marker(opts2));
             r2.addWaypoint(w2);
             
-            RouteStore store = new RouteStore();
+            MapStore store = new MapStore();
+            store.addMap("test");
+            store.selectMap("test");
             store.addRoute(r);
             store.addRoute(r2);
             
             String json = store.store();
             
             assertNotNull(json);
-            assertEquals(7397, json.length());
+            assertEquals(16069, json.length());
             
             //////////// Load /////////////
             
-            RouteStore loadedStore = RouteStore.load();
-            
+            MapStore loadedStore = new MapStore().load();
+            java.util.Map<String, PersistentMap> maps = loadedStore.getMaps();
+            assertEquals(1, maps.size());
             assertEquals(2, loadedStore.getRoutes().size());
             Route r1 = loadedStore.getRoutes().get(0);
             assertEquals("name1", r1.getName());
@@ -228,23 +234,28 @@ public class RouteStoreTest {
                 .strokeColor("red");
             r2.addLine(new Polyline(lineOpts));
             
-            RouteStore store = new RouteStore();
+            MapStore store = new MapStore();
+            store.addMap("test");
+            store.selectMap("test");
             store.addRoute(r);
             store.addRoute(r2);
             
             String json = store.store();
             
             assertNotNull(json);
-            assertEquals(9523, json.length());
+            assertEquals(20609, json.length());
             
             //////////// Load /////////////
             
-            RouteStore loadedStore = RouteStore.load();
+            MapStore loadedStore = new MapStore().load();
             
             assertEquals(2, loadedStore.getRoutes().size());
             Route r1 = loadedStore.getRoutes().get(0);
             assertEquals("name1", r1.getName());
             assertNotNull(r1.getOrigin());
+            assertNotNull(r1.getDestination());
+            assertEquals(1, r1.getInterimWaypoints().size());
+            
             assertEquals(Waypoint.class, r1.getOrigin().getClass());
         }catch(Exception e) {
             e.printStackTrace();

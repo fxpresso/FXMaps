@@ -1,15 +1,22 @@
 package ai.cogmission.fxmaps.demo;
 
 import javafx.application.Application;
-import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Separator;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
+import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
+import ai.cogmission.fxmaps.event.MapReadyListener;
 import ai.cogmission.fxmaps.model.LatLon;
 import ai.cogmission.fxmaps.model.MapOptions;
 import ai.cogmission.fxmaps.model.MapType;
+import ai.cogmission.fxmaps.model.PersistentMap;
+import ai.cogmission.fxmaps.model.Route;
+import ai.cogmission.fxmaps.model.Waypoint;
 import ai.cogmission.fxmaps.ui.Map;
 
 /**
@@ -23,11 +30,12 @@ public class RefImpl extends Application {
     
     private ToggleButton simulationBtn;
     private ToggleButton directionsBtn;
+    private GridPane loadPane;
+    private ComboBox<String> mapCombo;
     
     @Override
     public void start(Stage primaryStage) throws Exception {
-        map = Map.create();
-        map.initialize();
+        createMapPane();
         createToolBar();
         configureToolBar();
         Scene scene = new Scene(map.getNode(), Map.DEFAULT_WIDTH, Map.DEFAULT_HEIGHT);
@@ -42,7 +50,9 @@ public class RefImpl extends Application {
         ToolBar toolBar = new ToolBar(
             simulationBtn = new ToggleButton("Sim Mode"),
             new Separator(),
-            directionsBtn = new ToggleButton("Directions")
+            directionsBtn = new ToggleButton("Directions"),
+            new Separator(),
+            loadPane = getLoadControl()
         );
         
         map.addToolBar(toolBar);
@@ -76,6 +86,81 @@ public class RefImpl extends Application {
             .mapType(MapType.ROADMAP);
         
         map.setMapOptions(options);
+    }
+    
+    /**
+     * Creates and returns the control for loading maps
+     * @return  the control for loading maps
+     */
+    public GridPane getLoadControl() {
+        GridPane gp = new GridPane();
+        
+        mapCombo = new ComboBox<>();
+        mapCombo.setEditable(true);
+        mapCombo.setPromptText("Type or select map name.");
+        mapCombo.valueProperty().addListener(getMapSelectionListener());
+        
+        Button add = new Button("Add");
+        add.setOnAction(e -> createOrSelectMap(mapCombo.getSelectionModel().getSelectedItem()));
+        Button del = new Button("Delete");
+        del.setOnAction(e -> clearMap());
+        
+        gp.add(mapCombo, 0, 0, 2, 1);
+        gp.add(add, 2, 0);
+        gp.add(del, 3, 0);
+        
+        return gp;
+    }
+    
+    public void createMapPane() {
+        map = Map.create();
+        map.addMapReadyListener(getMapReadyListener());
+        map.initialize();
+    }
+    
+    public MapReadyListener getMapReadyListener() {
+        return () -> {
+            java.util.Map<String, PersistentMap> maps = map.getMapStore().getMaps();
+            mapCombo.getItems().addAll(maps.keySet());
+        };
+    }
+    
+    public void clearMap() {
+        PersistentMap pm = map.getMapStore().getMaps().get(map.getMapStore().getSelectedMap());
+        if(pm != null && pm.getRoutes() != null && pm.getRoutes().size() > 0) {
+            pm.getRoutes().clear();
+            map.removeAllRoutes();
+            map.getMapStore().store(); 
+        }
+    }
+    
+    public void createOrSelectMap(String mapName) {
+        clearMap();
+        
+        map.addMap(mapName);
+        if(!mapCombo.getItems().contains(mapName)) {
+            mapCombo.getItems().add(mapName);
+        }
+        
+        mapCombo.getSelectionModel().select(mapName);
+        try {
+            map.getMapStore().selectMap(mapName);
+        }catch(Exception e) { 
+            e.printStackTrace();
+        }
+        
+        PersistentMap pm = map.getMapStore().getMaps().get(map.getMapStore().getSelectedMap());
+        System.out.println("map " + map.getMapStore().getSelectedMap() + " has " + pm.getRoutes().size() + " routes: " + pm.getRoutes() );
+        
+        map.addRoutes(pm.getRoutes());
+        map.getMapStore().store();
+    }
+    
+    public ChangeListener<String> getMapSelectionListener() {
+        return (v, o, n) -> {
+            System.out.println("value = " + n);
+            createOrSelectMap(n);
+        };
     }
     
     /**

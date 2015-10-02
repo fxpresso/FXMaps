@@ -1,5 +1,6 @@
 package ai.cogmission.fxmaps.model;
 
+import javafx.application.Platform;
 import javafx.scene.web.WebEngine;
 
 import com.google.maps.model.LatLng;
@@ -28,7 +29,9 @@ public class LatLon {
     public LatLon(double latitude, double longitude) {
         this.latitude = latitude;
         this.longitude = longitude;
-        this.latLong = new com.lynden.gmapsfx.javascript.object.LatLong(latitude, longitude);
+        if(Platform.isFxApplicationThread()) {
+            this.latLong = new com.lynden.gmapsfx.javascript.object.LatLong(latitude, longitude);
+        }
     }
     
     /**
@@ -38,7 +41,11 @@ public class LatLon {
      * @return the variable name string identifier
      */
     public String getVariableName() {
-        return latLong.getVariableName();
+        if(latLong == null && Platform.isFxApplicationThread()) {
+            latLong = new com.lynden.gmapsfx.javascript.object.LatLong(latitude, longitude);
+            return latLong.getVariableName();
+        }
+        return "None";
     }
     
     /**
@@ -75,5 +82,33 @@ public class LatLon {
      */
     public LatLng toLatLng() {
         return new LatLng(latitude, longitude);
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        long temp;
+        temp = Double.doubleToLongBits(latitude);
+        result = prime * result + (int)(temp ^ (temp >>> 32));
+        temp = Double.doubleToLongBits(longitude);
+        result = prime * result + (int)(temp ^ (temp >>> 32));
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(this == obj)
+            return true;
+        if(obj == null)
+            return false;
+        if(getClass() != obj.getClass())
+            return false;
+        LatLon other = (LatLon)obj;
+        if(Double.doubleToLongBits(latitude) != Double.doubleToLongBits(other.latitude))
+            return false;
+        if(Double.doubleToLongBits(longitude) != Double.doubleToLongBits(other.longitude))
+            return false;
+        return true;
     }
 }

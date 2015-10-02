@@ -44,15 +44,29 @@ public class PolylineOptions extends MapShapeOptions<PolylineOptions> {
      * Creates the underlying PolylineOptions
      */
     public void createUnderlying() {
-        options = new com.lynden.gmapsfx.shapes.PolylineOptions();
-        
-        if(path != null) {
-            LatLong[] ary = path.stream()
-                .map(ll -> new LatLong(ll.getLatitude(), ll.getLongitude()))
-                .collect(Collectors.toList())
-                .toArray(new LatLong[0]);
-            MVCArray a = new MVCArray(ary);
-            options.path(a);
+        if(Platform.isFxApplicationThread()) {
+            options = new com.lynden.gmapsfx.shapes.PolylineOptions();
+            
+            if(path != null) {
+                LatLong[] ary = path.stream()
+                    .map(ll -> new LatLong(ll.getLatitude(), ll.getLongitude()))
+                    .collect(Collectors.toList())
+                    .toArray(new LatLong[0]);
+                MVCArray a = new MVCArray(ary);
+                options.path(a);
+                
+                if(getStrokeColor() != null) {
+                    options.strokeColor(getStrokeColor());
+                }
+                options.clickable(isClickable());
+                options.draggable(isDraggable());
+                options.editable(isEditable());
+                options.visible(isVisible());
+                options.strokeOpacity(getStrokeOpacity());
+                options.strokeWeight(getStrokeWeight());
+                options.zIndex(getZIndex());
+                options.geodesic(isGeodesic());
+            }
         }
     }
     
@@ -70,5 +84,30 @@ public class PolylineOptions extends MapShapeOptions<PolylineOptions> {
      */
     public com.lynden.gmapsfx.shapes.PolylineOptions convert() {
         return options;
+    }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((path == null) ? 0 : path.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(this == obj)
+            return true;
+        if(obj == null)
+            return false;
+        if(getClass() != obj.getClass())
+            return false;
+        PolylineOptions other = (PolylineOptions)obj;
+        if(path == null) {
+            if(other.path != null)
+                return false;
+        } else if(!path.equals(other.path))
+            return false;
+        return true;
     }
 }

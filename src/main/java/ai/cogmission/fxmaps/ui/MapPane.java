@@ -32,7 +32,7 @@ import ai.cogmission.fxmaps.model.MarkerType;
 import ai.cogmission.fxmaps.model.Polyline;
 import ai.cogmission.fxmaps.model.PolylineOptions;
 import ai.cogmission.fxmaps.model.Route;
-import ai.cogmission.fxmaps.model.RouteStore;
+import ai.cogmission.fxmaps.model.MapStore;
 import ai.cogmission.fxmaps.model.Waypoint;
 
 import com.lynden.gmapsfx.GoogleMapView;
@@ -42,15 +42,27 @@ import com.lynden.gmapsfx.javascript.object.LatLong;
 /**
  * Undecorated {@link Pane} extension which is specialized to contain a 
  * map view and an optional {@link DirectionsPane}.
+ * <p>
+ * To create a MapPane:
+ * <br><br>
+ * 1. Map map = Map.create("My Map Name");
+ * <br>--or--<br>
+ * 2. MapPane map = Map.create("My Map Name");
+ * <br><br>
+ * 
+ * To call JavaFX Node methods on the {@link MapPane} (such as setting width and height), use option 2.
  * 
  * @author cogmission
  *
  */
 public class MapPane extends BorderPane implements Map {
     private static final MapOptions DEFAULT_MAP_OPTIONS = getMapDefaultOptions();
-    private static final PolylineOptions DEFAULT_POLYLINE_OPTIONS = getDefaultPolylineOptions();
     private final MapEventHandler DEFAULT_MAPEVENT_HANDLER = getDefaultMapEventHandler();
+    private MapStore MAP_STORE;
     private boolean defaultMapEventHandlerInstalled = true;
+    
+    private PolylineOptions DEFAULT_POLYLINE_OPTIONS;
+    
     
     protected GoogleMapView mapComponent;
     protected GoogleMap googleMap;
@@ -60,14 +72,15 @@ public class MapPane extends BorderPane implements Map {
     protected DirectionsPane directionsPane;
     
     protected Route currentRoute;
-    protected RouteStore routeStore;
+    
+    protected List<MapReadyListener> readyListeners = new ArrayList<>();
     
     protected boolean isRouteSimMode;
     
     /**
      * Constructs a new {@code MapPane}
      */
-    public MapPane() {
+    MapPane() {
         setPrefWidth(1000);
         setPrefHeight(780);
         
@@ -77,8 +90,6 @@ public class MapPane extends BorderPane implements Map {
         directionsPane = new DirectionsPane();
         directionsPane.setPrefWidth(200);
         setDirectionsVisible(false);
-        
-        routeStore = new RouteStore();
     }
     
     /**
@@ -95,6 +106,20 @@ public class MapPane extends BorderPane implements Map {
         mapComponent.addMapInializedListener(this);
     }
     
+    @Override
+    public void addMap(String mapName) {
+        MAP_STORE.addMap(mapName);
+    }
+    
+    /**
+     * Returns the {@link MapOptions} set on this {@code Map}
+     * 
+     * @return  this {@code Map}'s {@link MapOptions}
+     */
+    public MapOptions getMapOptions() {
+        return this.userMapOptions;
+    }
+    
     /**
      * Specifies the {@link MapOptions} to use. <em>Note</em> this must
      * be set prior to calling {@link #initialize()}
@@ -104,6 +129,13 @@ public class MapPane extends BorderPane implements Map {
     @Override
     public void setMapOptions(MapOptions options) {
         this.userMapOptions = options;
+    }
+    
+    /**
+     * Returns this map's persistent store.
+     */
+    public MapStore getMapStore() {
+        return MAP_STORE;
     }
     
     /**
@@ -129,7 +161,8 @@ public class MapPane extends BorderPane implements Map {
         
         mapComponent.addMapReadyListener(() -> {
             // This call will fail unless the map is completely ready.
-            // Leaving this in for documentation on how to go from lat/lon
+            //
+            // NOTE: Leaving this in for documentation on how to go from lat/lon
             // to pixel coordinates.
             //checkCenter(center);
             
@@ -138,6 +171,14 @@ public class MapPane extends BorderPane implements Map {
                 String ip = Locator.getIp();
                 Location l = Locator.getIPLocation(ip);
                 googleMap.setCenter(new LatLong(l.getLatitude(), l.getLongitude()));
+                
+                MAP_STORE = MapStore.load(MapStore.DEFAULT_STORE_PATH);
+                
+                DEFAULT_POLYLINE_OPTIONS = getDefaultPolylineOptions();
+                
+                for(MapReadyListener li : readyListeners) {
+                    li.mapReady();
+                }
             }catch(Exception e) {
                 e.printStackTrace();
             }
@@ -170,7 +211,7 @@ public class MapPane extends BorderPane implements Map {
     }
     
     /**
-     * Sets the current {@link Route} to which {@link #addWaypoint(Waypoint)} will add a waypoint.
+     * Sets the current {@link Route} to which {@link #addNewWaypoint(Waypoint)} will add a waypoint.
      * Routes may be created by calling {@link Map#createRoute(String)} with a unique name.
      * 
      * @param r        the {@code Route} make current.
@@ -241,10 +282,17 @@ public class MapPane extends BorderPane implements Map {
         
     }
 
+    /**
+     * Adds the specified {@link MapReadyListener} to the list of listeners
+     * notified when the map becomes fully engageable.
+     * 
+     * @param listener  the {@code MapReadyListener} to add
+     */
     @Override
     public void addMapReadyListener(MapReadyListener listener) {
-        // TODO Auto-generated method stub
-        
+        if(!readyListeners.contains(listener)) {
+            readyListeners.add(listener);
+        }
     }
 
     @Override
@@ -296,7 +344,7 @@ public class MapPane extends BorderPane implements Map {
      * @see #addMarker(Marker)
      */
     @Override
-    public void addWaypoint(Waypoint waypoint) {
+    public void addNewWaypoint(Waypoint waypoint) {
         currentRoute.addWaypoint(waypoint);
         addMarker(waypoint.getMarker());
         
@@ -305,7 +353,7 @@ public class MapPane extends BorderPane implements Map {
             addShape(poly);
         }
         
-        routeStore.store();
+        MAP_STORE.store();
     }
     
     /**
@@ -314,34 +362,45 @@ public class MapPane extends BorderPane implements Map {
      * as opposed to adding a {@link Marker} which doesn't add 
      * a line. 
      * 
-     * @param waypoint  the {@link Waypoint} to be added.
-     * @param options   the subclass of {@link MapShapeOptions} containing desired
+     * @param waypoint          the {@link Waypoint} to be added.
+     * @param polylineOptions   the subclass of {@link MapShapeOptions} containing desired
      *                  properties of the rendering operation.
      * @see #addMarker(Marker)
-     * @see #addWaypoint(Waypoint)
+     * @see #addNewWaypoint(Waypoint)
      */
-    public <T extends MapShapeOptions<T>>void addWaypoint(Waypoint waypoint, T options) {
+    @Override
+    public <T extends MapShapeOptions<T>>void addNewWaypoint(Waypoint waypoint, T polylineOptions) {
         currentRoute.addWaypoint(waypoint);
         addMarker(waypoint.getMarker());
         
         if(currentRoute.size() > 1) {
-            Polyline poly = connectLastWaypoint(waypoint, options);
+            Polyline poly = connectLastWaypoint(waypoint, polylineOptions);
             addShape(poly);
         }
-        
-        routeStore.store();
+     }
+    
+    /**
+     * Adds a {@link Waypoint} from the {@link MapStore} when the specified
+     * Waypoint is already part of a {@link Route} and already has connecting leg lines.
+     * @param waypoint     the Waypoint to add
+     */
+    @Override
+    public void addWaypoint(Waypoint waypoint) {
+        addMarker(waypoint.getMarker());
     }
     
     /**
      * Returns the {@link Polyline} which connects the specified {@link Waypoint}
+     * @param   lastWaypoint        the newly added waypoint
+     * @param   polylineOptions     the line options to use for rendering
      * @return  the connecting Polyline
      */
-    private <T extends MapShapeOptions<T>> Polyline connectLastWaypoint(Waypoint lastWaypoint, T options) {
+    private <T extends MapShapeOptions<T>> Polyline connectLastWaypoint(Waypoint lastWaypoint, T polylineOptions) {
         List<LatLon> l = new ArrayList<>();
         l.add(currentRoute.getWaypoint(currentRoute.size() - 2).getLatLon());
         l.add(currentRoute.getWaypoint(currentRoute.size() - 1).getLatLon());
         
-        Polyline poly = new Polyline(options == null ? 
+        Polyline poly = new Polyline(polylineOptions == null ? 
             DEFAULT_POLYLINE_OPTIONS.path(l) : 
                 new PolylineOptions()
                     .path(l)
@@ -382,8 +441,8 @@ public class MapPane extends BorderPane implements Map {
      * @param route     the route to add
      */
     public void addRoute(Route route) {
-        routeStore.addRoute(route);
-        routeStore.store();
+        MAP_STORE.addRoute(route);
+        MAP_STORE.store();
     }
     
     /**
@@ -392,7 +451,8 @@ public class MapPane extends BorderPane implements Map {
      * @param route     the route to remove
      */
     public void removeRoute(Route route) {
-        
+        MAP_STORE.removeRoute(route);
+        MAP_STORE.store();
     }
     
     /**
@@ -401,14 +461,31 @@ public class MapPane extends BorderPane implements Map {
      * @param routes    the list of routes to add
      */
     public void addRoutes(List<Route> routes) {
-        
+        for(Route r : routes) {
+            currentRoute = r;
+            for(Waypoint wp : r.getWaypoints()) {
+                addWaypoint(wp);
+            }
+            for(Polyline p : r.getLines()) {
+                addShape(p);
+            }
+        }
     }
     
     /**
      * Removes all {@link Route}s from this {@code Map}
      */
     public void removeAllRoutes() {
+        currentRoute = null;
         
+        for(Route r : MAP_STORE.getRoutes()) {
+            for(Waypoint w : r.getWaypoints()) {
+                googleMap.removeMarker(w.getMarker().convert());
+            }
+            for(Polyline line : r.getLines()) {
+                googleMap.removeMapShape(line.convert());
+            }
+        }
     }
 
     @Override
@@ -439,7 +516,6 @@ public class MapPane extends BorderPane implements Map {
      */
     public void addObjectEventHandler(MapObject mapObject, MapEventType eventType, MapEventHandler handler) {
         googleMap.addUIEventHandler(mapObject.convert(), eventType.convert(), handler);
-        
     }
 
     @Override
@@ -488,6 +564,7 @@ public class MapPane extends BorderPane implements Map {
     private static PolylineOptions getDefaultPolylineOptions() {
         return new PolylineOptions()
             .strokeColor("red")
+            .visible(true)
             .strokeWeight(2);
     }
     
@@ -526,7 +603,7 @@ public class MapPane extends BorderPane implements Map {
                 LatLong ll = new LatLong((JSObject) obj.getMember("latLng"));
                 
                 Waypoint waypoint = createWaypoint(new LatLon(ll.getLatitude(), ll.getLongitude()));
-                addWaypoint(waypoint);
+                addNewWaypoint(waypoint);
                 
                 System.out.println("clicked: " + ll.getLatitude() + ", " + ll.getLongitude());
             }

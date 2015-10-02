@@ -58,5 +58,42 @@ public class Waypoint {
     public Polyline getConnection() {
         return connection;
     }
+
+    @Override
+    public int hashCode() {
+        final int prime = 31;
+        int result = 1;
+        result = prime * result + ((connection == null) ? 0 : connection.hashCode());
+        result = prime * result + ((latLon == null) ? 0 : latLon.hashCode());
+        result = prime * result + ((marker == null) ? 0 : marker.hashCode());
+        return result;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if(this == obj)
+            return true;
+        if(obj == null)
+            return false;
+        if(getClass() != obj.getClass())
+            return false;
+        Waypoint other = (Waypoint)obj;
+        if(connection == null) {
+            if(other.connection != null)
+                return false;
+        } else if(!connection.equals(other.connection))
+            return false;
+        if(latLon == null) {
+            if(other.latLon != null)
+                return false;
+        } else if(!latLon.equals(other.latLon))
+            return false;
+        if(marker == null) {
+            if(other.marker != null)
+                return false;
+        } else if(!marker.equals(other.marker))
+            return false;
+        return true;
+    }
     
 }

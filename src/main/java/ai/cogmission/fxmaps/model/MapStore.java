@@ -1,0 +1,217 @@
+package ai.cogmission.fxmaps.model;
+
+import java.io.File;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+
+import ai.cogmission.fxmaps.exception.MapDoesNotExistException;
+import ai.cogmission.fxmaps.ui.Map;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.gson.Gson;
+import com.google.gson.stream.MalformedJsonException;
+
+/**
+ * Implements application {@link Map} persistence.
+ *  
+ * @author cogmission
+ */
+public class MapStore {
+    public static final String DEFAULT_STORE_PATH = System.getProperty("user.home").concat("/map_store.json");
+    
+    private java.util.Map<String, PersistentMap> maps = new java.util.HashMap<>();
+    
+    private String storePath = DEFAULT_STORE_PATH;
+    
+    private String selectedMap;
+    
+    
+    /**
+     * Construct a new {@code MapStore}
+     */
+    public MapStore() {}
+    
+    /**
+     * Create a MapStore with a specified path.
+     * @param storePath
+     */
+    public MapStore(String storePath) {
+        this.storePath = storePath;
+    }
+    
+    /**
+     * Adds a new {@link PersistentMap} if one does not exist.
+     * This method is non-destructive (will not overwrite an existing map,
+     * with a new empty map).
+     * 
+     * @param newMapName    the name for the new map.
+     */
+    public void addMap(String newMapName) {
+        if(maps.get(newMapName) == null) {
+            maps.put(newMapName, new PersistentMap(selectedMap = newMapName));
+        }
+    }
+    
+    /**
+     * Adds the specified {@link Route} to this store's currently
+     * selected map
+     * @param r     the route to add
+     */
+    public void addRoute(Route r) {
+        maps.get(selectedMap).addRoute(r);
+    }
+    
+    /**
+     * Removes the specified {@link Route} from this store's 
+     * currently selected map.
+     * 
+     * @param r     the route to remove
+     */
+    public void removeRoute(Route r) {
+        maps.get(selectedMap).removeRoute(r);
+    }
+    
+    /**
+     * Returns all {@link Route}s in the currently selected {@link PersistentMap}
+     * 
+     * @return  all the selected map's routes
+     */
+    public List<Route> getRoutes() {
+        if(selectedMap == null) return Collections.emptyList();
+        
+        return maps.get(selectedMap).getRoutes();
+    }
+    
+    /**
+     * Selects the currently active map
+     * @param mapName   the name of the map to select
+     * @throws MapDoesNotExistException
+     */
+    public void selectMap(String mapName) throws MapDoesNotExistException {
+        if(!maps.containsKey(mapName)) {
+            throw new MapDoesNotExistException("No map exists with name: " + mapName);
+        }
+        
+        selectedMap = mapName;
+    }
+    
+    /**
+     * Returns the currently selected {@link PersistentMap} name.
+     * @return
+     */
+    public String getSelectedMap() {
+        return selectedMap;
+    }
+    
+    /**
+     * Removes the map with the specified name. 
+     * @param mapName   the name of the map to remove
+     */
+    public void deleteMap(String mapName) {
+        maps.remove(mapName);
+    }
+    
+    /**
+     * Returns the {@link HashMap} of {@link PersistentMap}s.
+     * @return  the {@link HashMap} of {@link PersistentMap}s.
+     */
+    public java.util.Map<String, PersistentMap> getMaps() {
+        return maps;
+    }
+    
+    /**
+     * Called prior to serialization to load the serializable data structure.
+     */
+    public void preSerialize() {
+        for(Route r : maps.get(selectedMap).getRoutes()) {
+            r.preSerialize();
+        }
+    }
+    
+    /**
+     * Called following deserialization to load the observable list. The observable
+     * list cannot be serialized using the current method, so we use a simple list
+     * for serialization and then copy the data over, after deserialization.
+     */
+    public void postDeserialize() throws MalformedJsonException {
+        for(Route r : maps.get(selectedMap).getRoutes()) {
+            r.postDeserialize();
+        }
+    }
+    
+    /**
+     * Implements the {@link Route} storage persistence.
+     * 
+     * @return  the serialized json string.
+     */
+    public String store() {
+        System.out.println("MapStore.store()");
+        preSerialize();
+        
+        //System.getProperty("user.home")
+        ObjectMapper mapper = new ObjectMapper();
+        
+        try {
+            // convert user object to json string, and save to a file
+            mapper.writeValue(new File(storePath), this);
+
+            String json = null;
+            // display to console
+            System.out.println(json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(this));
+            
+            return json; 
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Called to load the serialized {@link Routes} into this store. Uses the store
+     * path defined in the creation of this instance.
+     * 
+     * @return  a {@code RouteStore} containing previously serialized {@link Route}s
+     * or an empty store if there were no Routes previously persisted.
+     */
+    public MapStore load() {
+        return MapStore.load(storePath);
+    }
+    
+    /**
+     * Called to load the serialized {@link Routes} into this store.
+     * 
+     * @return  a {@code RouteStore} containing previously serialized {@link Route}s
+     * or an empty store if there were no Routes previously persisted.
+     * 
+     * @param path  the path to the persistent store json file
+     */
+    public static MapStore load(String path) {
+        path = path == null ? DEFAULT_STORE_PATH : path;
+        
+        try {
+            Gson gson = new Gson();
+            MapStore rs = gson.fromJson(
+                Files.newBufferedReader(FileSystems.getDefault().getPath(path)), MapStore.class);
+            
+            for(String mapName : rs.getMaps().keySet()) {
+                rs.selectMap(mapName);
+                rs.postDeserialize();
+            }
+           
+            rs.storePath = path;
+            
+            return rs;
+        }catch(MalformedJsonException m) {
+            System.out.println(m.getMessage());
+            File f = new File(path);
+            f.delete();
+        }catch(Exception e) {
+            System.out.println("No map store found, creating new map store.");
+        }
+        return new MapStore();
+    }
+}
