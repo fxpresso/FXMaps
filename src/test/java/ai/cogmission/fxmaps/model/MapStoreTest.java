@@ -98,21 +98,22 @@ public class MapStoreTest {
             MapStore store = new MapStore();
             store.addMap("test");
             store.selectMap("test");
-            store.addRoute(r);
-            store.addRoute(r2);
+            store.getMap(store.getSelectedMapName()).addRoute(r);
+            store.getMap(store.getSelectedMapName()).addRoute(r2);
             
             String json = store.store();
             
             assertNotNull(json);
-            assertEquals(16069, json.length());
+            assertEquals(8680, json.length());
             
             //////////// Load /////////////
             
             MapStore loadedStore = new MapStore().load();
+            loadedStore.selectMap("test");
             java.util.Map<String, PersistentMap> maps = loadedStore.getMaps();
             assertEquals(1, maps.size());
-            assertEquals(2, loadedStore.getRoutes().size());
-            Route r1 = loadedStore.getRoutes().get(0);
+            assertEquals(2, loadedStore.getMap(loadedStore.getSelectedMapName()).getRoutes().size());
+            Route r1 = loadedStore.getMap(loadedStore.getSelectedMapName()).getRoutes().get(0);
             assertEquals("name1", r1.getName());
             assertNotNull(r1.getOrigin());
             assertEquals(Waypoint.class, r1.getOrigin().getClass());
@@ -237,20 +238,20 @@ public class MapStoreTest {
             MapStore store = new MapStore();
             store.addMap("test");
             store.selectMap("test");
-            store.addRoute(r);
-            store.addRoute(r2);
+            store.getMap(store.getSelectedMapName()).addRoute(r);
+            store.getMap(store.getSelectedMapName()).addRoute(r2);
             
             String json = store.store();
             
             assertNotNull(json);
-            assertEquals(20609, json.length());
+            assertEquals(11118, json.length());
             
             //////////// Load /////////////
             
             MapStore loadedStore = new MapStore().load();
             
-            assertEquals(2, loadedStore.getRoutes().size());
-            Route r1 = loadedStore.getRoutes().get(0);
+            assertEquals(2, loadedStore.getMap(loadedStore.getSelectedMapName()).getRoutes().size());
+            Route r1 = loadedStore.getMap(loadedStore.getSelectedMapName()).getRoutes().get(0);
             assertEquals("name1", r1.getName());
             assertNotNull(r1.getOrigin());
             assertNotNull(r1.getDestination());

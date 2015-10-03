@@ -244,7 +244,11 @@ public interface Map extends MapComponentInitializedListener {
      * @throws RouteAlreadyExistsException
      */
     public static boolean checkRouteExists(MapStore store, String routeName) throws RouteAlreadyExistsException {
-        return store.getRoutes().parallelStream().filter(r -> r.getName().equals(routeName)).findAny().get() != null;
+        return store.getMap(store.getSelectedMapName())
+            .getRoutes()
+            .parallelStream()
+            .filter(r -> r.getName().equals(routeName))
+            .findAny().get() != null;
     }
     
     /**
@@ -259,15 +263,22 @@ public interface Map extends MapComponentInitializedListener {
      */
     public void removeRoute(Route route);
     /**
+     * Selects the specified {@link Route}, designating it
+     * to be the currently focused route.
+     * 
+     * @param route the {@code Route} to select.
+     */
+    public void selectRoute(Route route);
+    /**
      * Adds a list of {@link Route}s to this {@code Map}
      * 
      * @param routes    the list of routes to add
      */
-    public void addRoutes(List<Route> routes);
+    public void displayRoutes(List<Route> routes);
     /**
      * Removes all {@link Route}s from this {@code Map}
      */
-    public void removeAllRoutes();
+    public void removeAllRoutesFromDisplay();
     /**
      * Returns a Route consisting of arbitrary {@link Waypoint}s into a
      * {@link DirectionsRoute} which adheres to Streets and Highways. In

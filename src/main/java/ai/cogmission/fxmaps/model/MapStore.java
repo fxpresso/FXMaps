@@ -3,9 +3,7 @@ package ai.cogmission.fxmaps.model;
 import java.io.File;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 
 import ai.cogmission.fxmaps.exception.MapDoesNotExistException;
 import ai.cogmission.fxmaps.ui.Map;
@@ -56,36 +54,6 @@ public class MapStore {
     }
     
     /**
-     * Adds the specified {@link Route} to this store's currently
-     * selected map
-     * @param r     the route to add
-     */
-    public void addRoute(Route r) {
-        maps.get(selectedMap).addRoute(r);
-    }
-    
-    /**
-     * Removes the specified {@link Route} from this store's 
-     * currently selected map.
-     * 
-     * @param r     the route to remove
-     */
-    public void removeRoute(Route r) {
-        maps.get(selectedMap).removeRoute(r);
-    }
-    
-    /**
-     * Returns all {@link Route}s in the currently selected {@link PersistentMap}
-     * 
-     * @return  all the selected map's routes
-     */
-    public List<Route> getRoutes() {
-        if(selectedMap == null) return Collections.emptyList();
-        
-        return maps.get(selectedMap).getRoutes();
-    }
-    
-    /**
      * Selects the currently active map
      * @param mapName   the name of the map to select
      * @throws MapDoesNotExistException
@@ -102,7 +70,7 @@ public class MapStore {
      * Returns the currently selected {@link PersistentMap} name.
      * @return
      */
-    public String getSelectedMap() {
+    public String getSelectedMapName() {
         return selectedMap;
     }
     
@@ -112,6 +80,17 @@ public class MapStore {
      */
     public void deleteMap(String mapName) {
         maps.remove(mapName);
+    }
+    
+    /**
+     * Returns the {@link PersistentMap} with the specified
+     * name or null if it doesn't exist.
+     * 
+     * @param name  the name of the desired map to return
+     * @return  the {@code PersistentMap} with the specified name
+     */
+    public PersistentMap getMap(String name) {
+        return maps.get(name);
     }
     
     /**

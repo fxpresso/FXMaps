@@ -441,7 +441,7 @@ public class MapPane extends BorderPane implements Map {
      * @param route     the route to add
      */
     public void addRoute(Route route) {
-        MAP_STORE.addRoute(route);
+        MAP_STORE.getMap(MAP_STORE.getSelectedMapName()).addRoute(route);
         MAP_STORE.store();
     }
     
@@ -451,16 +451,26 @@ public class MapPane extends BorderPane implements Map {
      * @param route     the route to remove
      */
     public void removeRoute(Route route) {
-        MAP_STORE.removeRoute(route);
+        MAP_STORE.getMap(MAP_STORE.getSelectedMapName()).removeRoute(route);
         MAP_STORE.store();
     }
     
     /**
-     * Adds a list of {@link Route}s to this {@code Map}
+     * Selects the specified {@link Route}, designating it
+     * to be the currently focused route.
      * 
-     * @param routes    the list of routes to add
+     * @param route the {@code Route} to select.
      */
-    public void addRoutes(List<Route> routes) {
+    public void selectRoute(Route route) {
+        currentRoute = route;
+    }
+    
+    /**
+     * Displays the list of {@link Route}s on this {@code Map}
+     * 
+     * @param routes    the list of routes to display
+     */
+    public void displayRoutes(List<Route> routes) {
         for(Route r : routes) {
             currentRoute = r;
             for(Waypoint wp : r.getWaypoints()) {
@@ -473,12 +483,12 @@ public class MapPane extends BorderPane implements Map {
     }
     
     /**
-     * Removes all {@link Route}s from this {@code Map}
+     * Removes all displayed {@link Route}s from this {@code Map}
      */
-    public void removeAllRoutes() {
+    public void removeAllRoutesFromDisplay() {
         currentRoute = null;
         
-        for(Route r : MAP_STORE.getRoutes()) {
+        for(Route r : MAP_STORE.getMap(MAP_STORE.getSelectedMapName()).getRoutes()) {
             for(Waypoint w : r.getWaypoints()) {
                 googleMap.removeMarker(w.getMarker().convert());
             }

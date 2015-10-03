@@ -125,35 +125,48 @@ public class RefImpl extends Application {
         };
     }
     
-    public void clearMap() {
-        PersistentMap pm = map.getMapStore().getMaps().get(map.getMapStore().getSelectedMap());
+    public void deleteMap() {
+        PersistentMap pm = map.getMapStore().getMap(map.getMapStore().getSelectedMapName());
         if(pm != null && pm.getRoutes() != null && pm.getRoutes().size() > 0) {
-            pm.getRoutes().clear();
-            map.removeAllRoutes();
-            map.getMapStore().store(); 
+            map.removeAllRoutesFromDisplay();
+            map.getMapStore().deleteMap(map.getMapStore().getSelectedMapName());
+            map.getMapStore().store();
+        }
+    }
+    
+    public void clearMap() {
+        PersistentMap pm = map.getMapStore().getMap(map.getMapStore().getSelectedMapName());
+        if(pm != null && pm.getRoutes() != null && pm.getRoutes().size() > 0) {
+            map.removeAllRoutesFromDisplay();
         }
     }
     
     public void createOrSelectMap(String mapName) {
         clearMap();
         
+        // Will add a new map only if one doesn't exist under name
         map.addMap(mapName);
+        
+        // Add only if not already in combo
         if(!mapCombo.getItems().contains(mapName)) {
             mapCombo.getItems().add(mapName);
         }
         
+        // Initialize combo to point to selected map
         mapCombo.getSelectionModel().select(mapName);
+        
+        // IMPORTANT: Point the MapStore to the desired map selection
         try {
             map.getMapStore().selectMap(mapName);
         }catch(Exception e) { 
             e.printStackTrace();
         }
         
-        PersistentMap pm = map.getMapStore().getMaps().get(map.getMapStore().getSelectedMap());
-        System.out.println("map " + map.getMapStore().getSelectedMap() + " has " + pm.getRoutes().size() + " routes: " + pm.getRoutes() );
+        PersistentMap pm = map.getMapStore().getMap(mapName);
+        System.out.println("map " + map.getMapStore().getSelectedMapName() + " has " + pm.getRoutes().size() + " routes: " + pm.getRoutes() );
         
-        map.addRoutes(pm.getRoutes());
-        map.getMapStore().store();
+        // Display the selected map's routes
+        map.displayRoutes(pm.getRoutes());
     }
     
     public ChangeListener<String> getMapSelectionListener() {

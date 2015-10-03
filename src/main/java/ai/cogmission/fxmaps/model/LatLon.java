@@ -71,6 +71,9 @@ public class LatLon {
      * @return  the GMapsFX version of a lat long.
      */
     public LatLong toLatLong() {
+        if(latLong == null && latitude != 0) {
+            return this.latLong = new com.lynden.gmapsfx.javascript.object.LatLong(latitude, longitude);
+        }
         return latLong;
     }
     

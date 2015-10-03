@@ -113,15 +113,16 @@ public class PersistentMapTest {
             
             MapStore store = new MapStore(System.getProperty("user.home").concat("/testMapStore.json"));
             store.addMap("test");
-            store.addRoute(r1);
-            store.addRoute(r2);
-            store.addRoute(r3);
+            store.selectMap("test");
+            store.getMap(store.getSelectedMapName()).addRoute(r1);
+            store.getMap(store.getSelectedMapName()).addRoute(r2);
+            store.getMap(store.getSelectedMapName()).addRoute(r3);
             store.store();
             
             MapStore loadedStore = MapStore.load(System.getProperty("user.home").concat("/testMapStore.json"));
             loadedStore.selectMap("test");
             
-            List<Route> routes = loadedStore.getRoutes();
+            List<Route> routes = loadedStore.getMap(loadedStore.getSelectedMapName()).getRoutes();
             assertEquals(routes.get(0), r1);
             assertEquals(routes.get(1), r2);
             assertEquals(routes.get(2), r3);
