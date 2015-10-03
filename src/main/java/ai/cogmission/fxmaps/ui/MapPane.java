@@ -401,7 +401,7 @@ public class MapPane extends BorderPane implements Map {
         l.add(currentRoute.getWaypoint(currentRoute.size() - 1).getLatLon());
         
         Polyline poly = new Polyline(polylineOptions == null ? 
-            DEFAULT_POLYLINE_OPTIONS.path(l) : 
+            PolylineOptions.copy(DEFAULT_POLYLINE_OPTIONS).path(l) : 
                 new PolylineOptions()
                     .path(l)
                     .strokeColor("red")
@@ -424,6 +424,7 @@ public class MapPane extends BorderPane implements Map {
      * 
      * @param shape     the {@code MapShape} to add
      */
+    @Override
     public void addShape(MapShape shape) {
         googleMap.addMapShape(shape.convert());
     }
@@ -432,6 +433,7 @@ public class MapPane extends BorderPane implements Map {
      * Removes the specified {@link MapShape} from this {@code Map}
      * @param shape     the {@code MapShape} to remove
      */
+    @Override
     public void removeShape(MapShape shape) {
         googleMap.removeMapShape(shape.convert());
     }
@@ -440,6 +442,7 @@ public class MapPane extends BorderPane implements Map {
      * Adds a {@link Route} to this {@code Map}
      * @param route     the route to add
      */
+    @Override
     public void addRoute(Route route) {
         MAP_STORE.getMap(MAP_STORE.getSelectedMapName()).addRoute(route);
         MAP_STORE.store();
@@ -450,6 +453,7 @@ public class MapPane extends BorderPane implements Map {
      * 
      * @param route     the route to remove
      */
+    @Override
     public void removeRoute(Route route) {
         MAP_STORE.getMap(MAP_STORE.getSelectedMapName()).removeRoute(route);
         MAP_STORE.store();
@@ -461,6 +465,7 @@ public class MapPane extends BorderPane implements Map {
      * 
      * @param route the {@code Route} to select.
      */
+    @Override
     public void selectRoute(Route route) {
         currentRoute = route;
     }
@@ -470,6 +475,7 @@ public class MapPane extends BorderPane implements Map {
      * 
      * @param routes    the list of routes to display
      */
+    @Override
     public void displayRoutes(List<Route> routes) {
         for(Route r : routes) {
             currentRoute = r;
@@ -480,11 +486,23 @@ public class MapPane extends BorderPane implements Map {
                 addShape(p);
             }
         }
+        
+        refresh();
+    }
+    
+    /**
+     * Redraws the map
+     */
+    @Override
+    public void refresh() {
+        googleMap.setZoom(googleMap.getZoom() + 1);
+        googleMap.setZoom(googleMap.getZoom() - 1);
     }
     
     /**
      * Removes all displayed {@link Route}s from this {@code Map}
      */
+    @Override
     public void removeAllRoutesFromDisplay() {
         currentRoute = null;
         

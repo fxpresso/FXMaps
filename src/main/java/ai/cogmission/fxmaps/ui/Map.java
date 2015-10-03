@@ -276,6 +276,10 @@ public interface Map extends MapComponentInitializedListener {
      */
     public void displayRoutes(List<Route> routes);
     /**
+     * Redraws the map
+     */
+    public void refresh();
+    /**
      * Removes all {@link Route}s from this {@code Map}
      */
     public void removeAllRoutesFromDisplay();

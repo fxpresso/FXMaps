@@ -1,5 +1,6 @@
 package ai.cogmission.fxmaps.model;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,6 +19,28 @@ public class PolylineOptions extends MapShapeOptions<PolylineOptions> {
         if(Platform.isFxApplicationThread()) {
             options = new com.lynden.gmapsfx.shapes.PolylineOptions();
         }
+    }
+    
+    /**
+     * Returns a copy of the specified {@code PolylineOptions}
+     * 
+     * @param p options to copy
+     */
+    public static PolylineOptions copy(PolylineOptions p) {
+        PolylineOptions copy = new PolylineOptions();
+        if(p.path != null) {
+            copy.path = new ArrayList<>(p.path);
+        }
+        copy.strokeColor(p.getStrokeColor())
+            .clickable(p.isClickable())
+            .draggable(p.isDraggable())
+            .editable(p.isEditable())
+            .visible(p.isVisible())
+            .strokeOpacity(p.getStrokeOpacity())
+            .strokeWeight(p.getStrokeWeight())
+            .zIndex(p.getZIndex())
+            .geodesic(p.isGeodesic());
+        return copy;
     }
     
     /**
