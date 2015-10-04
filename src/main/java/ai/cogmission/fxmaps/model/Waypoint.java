@@ -8,11 +8,11 @@ package ai.cogmission.fxmaps.model;
  * @author cogmission
  *
  */
-public class Waypoint {
-    private LatLon latLon;
-    private Marker marker;
+public class Waypoint implements MapObject {
+    protected LatLon latLon;
+    protected Marker marker;
     
-    private Polyline connection;
+    protected Polyline connection;
     
     
     /**
@@ -57,6 +57,14 @@ public class Waypoint {
      */
     public Polyline getConnection() {
         return connection;
+    }
+    
+    /**
+     * Overridden to return null;
+     */
+    @Override
+    public com.lynden.gmapsfx.javascript.object.Marker convert() {
+        return null;
     }
 
     @Override

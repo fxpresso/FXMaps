@@ -21,18 +21,18 @@ import com.google.gson.stream.MalformedJsonException;
  */
 public class Route {
     
-    private ObservableList<Waypoint> observableDelegate = FXCollections.observableArrayList();
+    protected ObservableList<Waypoint> observableDelegate = FXCollections.observableArrayList();
     
     @SerializedName("waypoints")
-    private List<Waypoint> delegate = new ArrayList<>();
+    protected List<Waypoint> delegate = new ArrayList<>();
     
-    private List<Polyline> lines = new ArrayList<>();
+    protected List<Polyline> lines = new ArrayList<>();
     
-    private String name;
-    private Waypoint origin;
-    private Waypoint destination;
+    protected String name;
+    protected Waypoint origin;
+    protected Waypoint destination;
     
-    private String id;
+    protected String id;
     
 
     /** Constructs a new {@code Route} */

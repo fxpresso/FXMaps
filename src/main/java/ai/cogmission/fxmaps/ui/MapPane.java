@@ -9,9 +9,13 @@ import javafx.beans.property.ObjectProperty;
 import javafx.beans.value.ObservableValue;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
+import javafx.scene.control.ContextMenu;
+import javafx.scene.control.MenuItem;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.web.WebView;
+import javafx.stage.PopupWindow.AnchorLocation;
+import javafx.stage.Window;
 import netscape.javascript.JSObject;
 import ai.cogmission.fxmaps.event.MapEventHandler;
 import ai.cogmission.fxmaps.event.MapEventType;
@@ -25,6 +29,7 @@ import ai.cogmission.fxmaps.model.MapObject;
 import ai.cogmission.fxmaps.model.MapOptions;
 import ai.cogmission.fxmaps.model.MapShape;
 import ai.cogmission.fxmaps.model.MapShapeOptions;
+import ai.cogmission.fxmaps.model.MapStore;
 import ai.cogmission.fxmaps.model.MapType;
 import ai.cogmission.fxmaps.model.Marker;
 import ai.cogmission.fxmaps.model.MarkerOptions;
@@ -32,7 +37,6 @@ import ai.cogmission.fxmaps.model.MarkerType;
 import ai.cogmission.fxmaps.model.Polyline;
 import ai.cogmission.fxmaps.model.PolylineOptions;
 import ai.cogmission.fxmaps.model.Route;
-import ai.cogmission.fxmaps.model.MapStore;
 import ai.cogmission.fxmaps.model.Waypoint;
 
 import com.lynden.gmapsfx.GoogleMapView;
@@ -77,6 +81,11 @@ public class MapPane extends BorderPane implements Map {
     
     protected boolean isRouteSimMode;
     
+    protected ContextMenu contextMenu;
+    protected MapObject currMapObj;
+   
+    
+    
     /**
      * Constructs a new {@code MapPane}
      */
@@ -87,9 +96,40 @@ public class MapPane extends BorderPane implements Map {
         mapComponent = new GoogleMapView(); 
         setCenter(mapComponent);
         
+        contextMenu = getContextMenu();
+        contextMenu.hideOnEscapeProperty().set(true);
+        
+        mapComponent.getWebView().setOnMousePressed(e -> {
+            if(e.isPrimaryButtonDown()) {
+                contextMenu.hide();
+                refresh();
+            }
+        });
+        
         directionsPane = new DirectionsPane();
         directionsPane.setPrefWidth(200);
         setDirectionsVisible(false);
+    }
+    
+    public ContextMenu getContextMenu() {
+        if(contextMenu == null) {
+            ContextMenu menu = new ContextMenu();
+            MenuItem deleteItem = new MenuItem("Delete Object...");
+            deleteItem.setOnAction(e -> {
+                if(currMapObj instanceof Marker) {
+                    clearMarker((Marker)currMapObj);
+                }else if(currMapObj instanceof Waypoint){
+                    clearMarker(((Waypoint)currMapObj).getMarker());
+                }
+            });
+            menu.getItems().add(deleteItem);
+            
+            menu.setAnchorLocation(AnchorLocation.WINDOW_TOP_LEFT);
+            
+            contextMenu = menu;
+        }
+        
+        return contextMenu;
     }
     
     /**
@@ -320,7 +360,11 @@ public class MapPane extends BorderPane implements Map {
         System.out.println("marker obj = " + obj);
         System.out.println("icon = " + marker.convert().getJSObject().getMember("icon"));
     }
-
+    
+    private void setCurrentMapObject(MapObject o) {
+        this.currMapObj = o;
+    }
+    
     /**
      * Removes the specified {@link Marker} from the {@code Map}, as opposed to removing
      * a {@link Waypoint} which removes a {@code Marker} and a connecting
@@ -347,7 +391,7 @@ public class MapPane extends BorderPane implements Map {
     public Waypoint createWaypoint(LatLon latLon) {
         MarkerOptions opts = new MarkerOptions()
             .position(latLon)
-            .title("Waypoint ")
+            .title("Waypoint")
             .icon(MarkerType.GREEN.nextPath())
             .visible(true);
         
@@ -366,7 +410,7 @@ public class MapPane extends BorderPane implements Map {
      */
     @Override
     public void addNewWaypoint(Waypoint waypoint) {
-        displayMarker(waypoint.getMarker());
+        displayWaypoint(waypoint);
         
         currentRoute.addWaypoint(waypoint);
         if(currentRoute.size() > 1) {
@@ -393,7 +437,7 @@ public class MapPane extends BorderPane implements Map {
     @Override
     public <T extends MapShapeOptions<T>>void addNewWaypoint(Waypoint waypoint, T polylineOptions) {
         currentRoute.addWaypoint(waypoint);
-        displayMarker(waypoint.getMarker());
+        displayWaypoint(waypoint);
         
         if(currentRoute.size() > 1) {
             Polyline poly = connectLastWaypoint(waypoint, polylineOptions);
@@ -411,6 +455,22 @@ public class MapPane extends BorderPane implements Map {
     @Override
     public void displayWaypoint(Waypoint waypoint) {
         displayMarker(waypoint.getMarker());
+        
+        addObjectEventHandler(waypoint.getMarker(), MapEventType.RIGHTCLICK, (JSObject o) -> {
+            setCurrentMapObject(waypoint);
+            
+            String id = waypoint.getMarker().getMarkerOptions().getIcon();
+            id = id.substring(id.lastIndexOf("M"), id.lastIndexOf("."));
+            contextMenu.getItems().get(0).setText("Delete " + id);
+            
+            LatLong cxtLL = new LatLong((JSObject) o.getMember("latLng"));
+            Point2D p = googleMap.fromLatLngToPoint(cxtLL);
+            Window w = MapPane.this.getScene().getWindow();
+            contextMenu.show(
+                mapComponent.getWebView(),
+                    w.getX() + p.getX() + 10, 
+                        w.getY() + p.getY());
+        });
     }
     
     /**
@@ -426,10 +486,7 @@ public class MapPane extends BorderPane implements Map {
         
         Polyline poly = new Polyline(polylineOptions == null ? 
             PolylineOptions.copy(DEFAULT_POLYLINE_OPTIONS).path(l) : 
-                new PolylineOptions()
-                    .path(l)
-                    .strokeColor("red")
-                    .strokeWeight(2));
+                (PolylineOptions)polylineOptions);
      
         lastWaypoint.setConnection(poly);
      
@@ -566,10 +623,11 @@ public class MapPane extends BorderPane implements Map {
      * @param eventType     the Event Type to monitor
      * @param handler       the handler to be notified.
      */
+    @Override
     public void addObjectEventHandler(MapObject mapObject, MapEventType eventType, MapEventHandler handler) {
         googleMap.addUIEventHandler(mapObject.convert(), eventType.convert(), handler);
     }
-
+    
     @Override
     public void addMapObject(MapObject mapObject) {
         // TODO Auto-generated method stub
@@ -655,9 +713,7 @@ public class MapPane extends BorderPane implements Map {
                 LatLong ll = new LatLong((JSObject) obj.getMember("latLng"));
                 
                 Waypoint waypoint = createWaypoint(new LatLon(ll.getLatitude(), ll.getLongitude()));
-                addObjectEventHandler(waypoint.getMarker(), MapEventType.RIGHTCLICK, (JSObject o) -> {
-                    
-                });
+                
                 addNewWaypoint(waypoint);
                 
                 System.out.println("clicked: " + ll.getLatitude() + ", " + ll.getLongitude());

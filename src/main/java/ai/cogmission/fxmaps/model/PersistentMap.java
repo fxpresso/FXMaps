@@ -5,11 +5,11 @@ import java.util.List;
 
 
 public class PersistentMap {
-    private List<Route> routes = new ArrayList<>();
-    private MapOptions mapOptions;
-    private String name;
-    private double width;
-    private double height;
+    protected List<Route> routes = new ArrayList<>();
+    protected MapOptions mapOptions;
+    protected String name;
+    protected double width;
+    protected double height;
     
     public PersistentMap(String name) {
         this.name = name;

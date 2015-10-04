@@ -48,7 +48,7 @@ public class RefImpl extends Application {
      */
     public void createToolBar() {
         ToolBar toolBar = new ToolBar(
-            simulationBtn = new ToggleButton("Sim Mode"),
+            simulationBtn = new ToggleButton("Simulation Mode"),
             new Separator(),
             directionsBtn = new ToggleButton("Directions"),
             new Separator(),
@@ -94,6 +94,7 @@ public class RefImpl extends Application {
      */
     public GridPane getLoadControl() {
         GridPane gp = new GridPane();
+        gp.setHgap(5);
         
         mapCombo = new ComboBox<>();
         mapCombo.setEditable(true);
@@ -102,7 +103,7 @@ public class RefImpl extends Application {
         
         Button add = new Button("Add");
         add.setOnAction(e -> createOrSelectMap(mapCombo.getSelectionModel().getSelectedItem()));
-        Button del = new Button("Delete");
+        Button del = new Button("Clear map");
         del.setOnAction(e -> clearMap());
         
         gp.add(mapCombo, 0, 0, 2, 1);
@@ -142,7 +143,7 @@ public class RefImpl extends Application {
     }
     
     public void createOrSelectMap(String mapName) {
-        clearMap();
+        map.clearMap();
         
         // Will add a new map only if one doesn't exist under name
         map.addMap(mapName);
