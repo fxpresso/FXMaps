@@ -12,7 +12,6 @@ import ai.cogmission.fxmaps.event.MapEventHandler;
 import ai.cogmission.fxmaps.event.MapEventType;
 import ai.cogmission.fxmaps.event.MapInitializedListener;
 import ai.cogmission.fxmaps.event.MapReadyListener;
-import ai.cogmission.fxmaps.exception.RouteAlreadyExistsException;
 import ai.cogmission.fxmaps.model.DirectionsRoute;
 import ai.cogmission.fxmaps.model.LatLon;
 import ai.cogmission.fxmaps.model.MapObject;
@@ -151,34 +150,36 @@ public interface Map extends MapComponentInitializedListener {
      */
     public void removeReadyListener(MapReadyListener listener);
     /**
-     * Adds a {@link Marker} to the {@code Map}, as opposed to adding
+     * Displays a {@link Marker} on the {@code Map}, as opposed to adding
      * a {@link Waypoint} which adds a {@code Marker} and a connecting
      * line from any previous {@link Marker} along a given {@link Route}.
      * 
      * @param marker    the marker to add
      * @see Wayoint
      */
-    public void addMarker(Marker marker);
+    public void displayMarker(Marker marker);
     /**
      * Removes the specified {@link Marker} from the {@code Map}, as opposed to removing
      * a {@link Waypoint} which removes a {@code Marker} and a connecting
-     * line from any previous {@link Marker} along a given {@link Route}.
+     * line from any previous {@link Marker} along a given {@link Route}. 
+     * 
+     * This method only removes the marker from the display, it does nothing to the route.
      * 
      * @param marker    the marker to remove
      * @see Waypoint
      */
-    public void removeMarker(Marker marker);
+    public void clearMarker(Marker marker);
     /**
      * Adds the specified {@link MapShape} to this {@code Map}
      * 
      * @param shape     the {@code MapShape} to add
      */
-    public void addShape(MapShape shape);
+    public void displayShape(MapShape shape);
     /**
      * Removes the specified {@link MapShape} from this {@code Map}
      * @param shape     the {@code MapShape} to remove
      */
-    public void removeShape(MapShape shape);
+    public void clearShape(MapShape shape);
     /**
      * Creates a {@link Waypoint} which is a combination of a 
      * {@link LatLon} and a {@link Marker}. 
@@ -194,19 +195,25 @@ public interface Map extends MapComponentInitializedListener {
      * a line.
      * 
      * @param waypoint  the {@link Waypoint} to be added.
-     * @see #addMarker(Marker)
+     * @see #displayMarker(Marker)
      */
     public void addNewWaypoint(Waypoint waypoint);
     /**
+     * Adds and Displays a {@link Waypoint}
+     * <p>
      * Adds a {@link Waypoint} to the map connecting it to any 
      * previously added {@code Waypoint}s by a connecting line,
      * as opposed to adding a {@link Marker} which doesn't add 
-     * a line. 
+     * a line.
+     * </p><p>
+     * Distinguished from {@link #displayWaypoint(Waypoint)} which
+     * is used to add a persisted Waypoint that has already been
+     * created, to the display.
      * 
      * @param waypoint          the {@link Waypoint} to be added.
      * @param polylineOptions   the subclass of {@link MapShapeOptions} containing desired
      *                  properties of the rendering operation.
-     * @see #addMarker(Marker)
+     * @see #displayMarker(Marker)
      * @see #addNewWaypoint(Waypoint)
      */
     public <T extends MapShapeOptions<T>>void addNewWaypoint(Waypoint waypoint, T polylineOptions);
@@ -215,12 +222,12 @@ public interface Map extends MapComponentInitializedListener {
      * Waypoint is already part of a {@link Route} and already has connecting leg lines.
      * @param waypoint     the Waypoint to add
      */
-    public void addWaypoint(Waypoint point);
+    public void displayWaypoint(Waypoint point);
     /**
      * Removes the {@link Waypoint} from the map and its connecting line.
      * 
      * @param wayoint
-     * @see #addMarker(Marker)
+     * @see #displayMarker(Marker)
      */
     public void removeWaypoint(Waypoint wayoint);
     /**
@@ -230,25 +237,9 @@ public interface Map extends MapComponentInitializedListener {
      * @return  the route which was added.
      * @throws RouteAlreadyExistsException  if a Route by the specified name already exists.
      */
-    public static Route createRoute(String name) throws RouteAlreadyExistsException {
+    public static Route createRoute(String name) {
         Route r = new Route(name);
         return r;
-    }
-    
-    /**
-     * Returns a flag indicating whether the specified route exists or not.
-     * 
-     * @param store         the {@link MapStore} to check
-     * @param routeName     the route name to match
-     * @return  true if route name exists in the specified store, false if not.
-     * @throws RouteAlreadyExistsException
-     */
-    public static boolean checkRouteExists(MapStore store, String routeName) throws RouteAlreadyExistsException {
-        return store.getMap(store.getSelectedMapName())
-            .getRoutes()
-            .parallelStream()
-            .filter(r -> r.getName().equals(routeName))
-            .findAny().get() != null;
     }
     
     /**
@@ -282,7 +273,7 @@ public interface Map extends MapComponentInitializedListener {
     /**
      * Removes all {@link Route}s from this {@code Map}
      */
-    public void removeAllRoutesFromDisplay();
+    public void clearMap();
     /**
      * Returns a Route consisting of arbitrary {@link Waypoint}s into a
      * {@link DirectionsRoute} which adheres to Streets and Highways. In

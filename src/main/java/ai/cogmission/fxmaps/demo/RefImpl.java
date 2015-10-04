@@ -97,7 +97,7 @@ public class RefImpl extends Application {
         
         mapCombo = new ComboBox<>();
         mapCombo.setEditable(true);
-        mapCombo.setPromptText("Type or select map name.");
+        mapCombo.setPromptText("Type or select name.");
         mapCombo.valueProperty().addListener(getMapSelectionListener());
         
         Button add = new Button("Add");
@@ -128,7 +128,7 @@ public class RefImpl extends Application {
     public void deleteMap() {
         PersistentMap pm = map.getMapStore().getMap(map.getMapStore().getSelectedMapName());
         if(pm != null && pm.getRoutes() != null && pm.getRoutes().size() > 0) {
-            map.removeAllRoutesFromDisplay();
+            map.clearMap();
             map.getMapStore().deleteMap(map.getMapStore().getSelectedMapName());
             map.getMapStore().store();
         }
@@ -137,7 +137,7 @@ public class RefImpl extends Application {
     public void clearMap() {
         PersistentMap pm = map.getMapStore().getMap(map.getMapStore().getSelectedMapName());
         if(pm != null && pm.getRoutes() != null && pm.getRoutes().size() > 0) {
-            map.removeAllRoutesFromDisplay();
+            map.clearMap();
         }
     }
     
@@ -171,7 +171,6 @@ public class RefImpl extends Application {
     
     public ChangeListener<String> getMapSelectionListener() {
         return (v, o, n) -> {
-            System.out.println("value = " + n);
             createOrSelectMap(n);
         };
     }

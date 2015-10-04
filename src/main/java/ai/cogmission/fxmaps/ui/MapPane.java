@@ -134,6 +134,7 @@ public class MapPane extends BorderPane implements Map {
     /**
      * Returns this map's persistent store.
      */
+    @Override
     public MapStore getMapStore() {
         return MAP_STORE;
     }
@@ -216,6 +217,7 @@ public class MapPane extends BorderPane implements Map {
      * 
      * @param r        the {@code Route} make current.
      */
+    @Override
     public void setCurrentRoute(Route route) {
         this.currentRoute = route;
     }
@@ -301,8 +303,16 @@ public class MapPane extends BorderPane implements Map {
         
     }
     
+    /**
+     * Displays a {@link Marker} on the {@code Map}, as opposed to adding
+     * a {@link Waypoint} which adds a {@code Marker} and a connecting
+     * line from any previous {@link Marker} along a given {@link Route}.
+     * 
+     * @param marker    the marker to add
+     * @see Wayoint
+     */
     @Override
-    public void addMarker(Marker marker) {
+    public void displayMarker(Marker marker) {
         googleMap.addMarker(marker.convert());
         String name = marker.convert().getVariableName();
         System.out.println("marker name = " + name);
@@ -311,8 +321,18 @@ public class MapPane extends BorderPane implements Map {
         System.out.println("icon = " + marker.convert().getJSObject().getMember("icon"));
     }
 
+    /**
+     * Removes the specified {@link Marker} from the {@code Map}, as opposed to removing
+     * a {@link Waypoint} which removes a {@code Marker} and a connecting
+     * line from any previous {@link Marker} along a given {@link Route}. 
+     * 
+     * This method only removes the marker from the display, it does nothing to the route.
+     * 
+     * @param marker    the marker to remove
+     * @see Waypoint
+     */
     @Override
-    public void removeMarker(Marker marker) {
+    public void clearMarker(Marker marker) {
         googleMap.removeMarker(marker.convert());
     }
 
@@ -338,19 +358,20 @@ public class MapPane extends BorderPane implements Map {
      * Adds a {@link Waypoint} to the map connecting it to any 
      * previously added {@code Waypoint}s by a connecting line,
      * as opposed to adding a {@link Marker} which doesn't add 
-     * a line.
+     * a line. The specified Waypoint is also added to the 
+     * currently focused route.
      * 
      * @param waypoint  the {@link Waypoint} to be added.
-     * @see #addMarker(Marker)
+     * @see #displayMarker(Marker)
      */
     @Override
     public void addNewWaypoint(Waypoint waypoint) {
-        currentRoute.addWaypoint(waypoint);
-        addMarker(waypoint.getMarker());
+        displayMarker(waypoint.getMarker());
         
+        currentRoute.addWaypoint(waypoint);
         if(currentRoute.size() > 1) {
             Polyline poly = connectLastWaypoint(waypoint, null);
-            addShape(poly);
+            displayShape(poly);
         }
         
         MAP_STORE.store();
@@ -360,23 +381,26 @@ public class MapPane extends BorderPane implements Map {
      * Adds a {@link Waypoint} to the map connecting it to any 
      * previously added {@code Waypoint}s by a connecting line,
      * as opposed to adding a {@link Marker} which doesn't add 
-     * a line. 
+     * a line. The specified Waypoint is also added to the 
+     * currently focused route.
      * 
      * @param waypoint          the {@link Waypoint} to be added.
      * @param polylineOptions   the subclass of {@link MapShapeOptions} containing desired
      *                  properties of the rendering operation.
-     * @see #addMarker(Marker)
+     * @see #displayMarker(Marker)
      * @see #addNewWaypoint(Waypoint)
      */
     @Override
     public <T extends MapShapeOptions<T>>void addNewWaypoint(Waypoint waypoint, T polylineOptions) {
         currentRoute.addWaypoint(waypoint);
-        addMarker(waypoint.getMarker());
+        displayMarker(waypoint.getMarker());
         
         if(currentRoute.size() > 1) {
             Polyline poly = connectLastWaypoint(waypoint, polylineOptions);
-            addShape(poly);
+            displayShape(poly);
         }
+        
+        MAP_STORE.store();
      }
     
     /**
@@ -385,8 +409,8 @@ public class MapPane extends BorderPane implements Map {
      * @param waypoint     the Waypoint to add
      */
     @Override
-    public void addWaypoint(Waypoint waypoint) {
-        addMarker(waypoint.getMarker());
+    public void displayWaypoint(Waypoint waypoint) {
+        displayMarker(waypoint.getMarker());
     }
     
     /**
@@ -414,7 +438,7 @@ public class MapPane extends BorderPane implements Map {
     }
 
     @Override
-    public void removeWaypoint(Waypoint wayoint) {
+    public void removeWaypoint(Waypoint waypoint) {
         // TODO Auto-generated method stub
         
     }
@@ -425,7 +449,7 @@ public class MapPane extends BorderPane implements Map {
      * @param shape     the {@code MapShape} to add
      */
     @Override
-    public void addShape(MapShape shape) {
+    public void displayShape(MapShape shape) {
         googleMap.addMapShape(shape.convert());
     }
     
@@ -434,7 +458,7 @@ public class MapPane extends BorderPane implements Map {
      * @param shape     the {@code MapShape} to remove
      */
     @Override
-    public void removeShape(MapShape shape) {
+    public void clearShape(MapShape shape) {
         googleMap.removeMapShape(shape.convert());
     }
     
@@ -480,10 +504,10 @@ public class MapPane extends BorderPane implements Map {
         for(Route r : routes) {
             currentRoute = r;
             for(Waypoint wp : r.getWaypoints()) {
-                addWaypoint(wp);
+                displayWaypoint(wp);
             }
             for(Polyline p : r.getLines()) {
-                addShape(p);
+                displayShape(p);
             }
         }
         
@@ -503,7 +527,7 @@ public class MapPane extends BorderPane implements Map {
      * Removes all displayed {@link Route}s from this {@code Map}
      */
     @Override
-    public void removeAllRoutesFromDisplay() {
+    public void clearMap() {
         currentRoute = null;
         
         for(Route r : MAP_STORE.getMap(MAP_STORE.getSelectedMapName()).getRoutes()) {
@@ -631,6 +655,9 @@ public class MapPane extends BorderPane implements Map {
                 LatLong ll = new LatLong((JSObject) obj.getMember("latLng"));
                 
                 Waypoint waypoint = createWaypoint(new LatLon(ll.getLatitude(), ll.getLongitude()));
+                addObjectEventHandler(waypoint.getMarker(), MapEventType.RIGHTCLICK, (JSObject o) -> {
+                    
+                });
                 addNewWaypoint(waypoint);
                 
                 System.out.println("clicked: " + ll.getLatitude() + ", " + ll.getLongitude());
