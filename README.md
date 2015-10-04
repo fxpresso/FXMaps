@@ -23,6 +23,10 @@ ai.cogmission.fxmaps.RefImpl
 I will keep its status up to date until I reach the point where I can start work on the project that uses this library (see [Nostromo](https://github.com/cogmission/Nostromo))
 
 ***
+**(2015-10-2)**
+* Multiple routes now save and load correctly
+* Can save a load multiple maps from the combo list
+
 **(2015-09-26)**
 * Added route lines to waypoints! (still needs work)
 * Added MapOptions
