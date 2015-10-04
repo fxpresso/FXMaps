@@ -1,5 +1,7 @@
 package ai.cogmission.fxmaps.demo;
 
+import java.io.File;
+
 import javafx.application.Application;
 import javafx.beans.value.ChangeListener;
 import javafx.scene.Scene;
@@ -9,15 +11,18 @@ import javafx.scene.control.Separator;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
 import javafx.scene.layout.GridPane;
+import javafx.stage.FileChooser;
+import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
 import ai.cogmission.fxmaps.event.MapReadyListener;
 import ai.cogmission.fxmaps.model.LatLon;
 import ai.cogmission.fxmaps.model.MapOptions;
 import ai.cogmission.fxmaps.model.MapType;
 import ai.cogmission.fxmaps.model.PersistentMap;
-import ai.cogmission.fxmaps.model.Route;
-import ai.cogmission.fxmaps.model.Waypoint;
 import ai.cogmission.fxmaps.ui.Map;
+import ai.cogmission.fxmaps.xml.GPXPersistentMap;
+import ai.cogmission.fxmaps.xml.GPXReader;
+import ai.cogmission.fxmaps.xml.GPXType;
 
 /**
  * Reference implementation for the FXMaps library.
@@ -28,6 +33,8 @@ import ai.cogmission.fxmaps.ui.Map;
 public class RefImpl extends Application {
     private Map map;
     
+    private Stage primaryStage;
+    
     private ToggleButton simulationBtn;
     private ToggleButton directionsBtn;
     private GridPane loadPane;
@@ -35,6 +42,8 @@ public class RefImpl extends Application {
     
     @Override
     public void start(Stage primaryStage) throws Exception {
+        this.primaryStage = primaryStage;
+        
         createMapPane();
         createToolBar();
         configureToolBar();
@@ -51,6 +60,8 @@ public class RefImpl extends Application {
             simulationBtn = new ToggleButton("Simulation Mode"),
             new Separator(),
             directionsBtn = new ToggleButton("Directions"),
+            new Separator(),
+            getGPXLoadControl(),
             new Separator(),
             loadPane = getLoadControl()
         );
@@ -90,7 +101,7 @@ public class RefImpl extends Application {
     
     /**
      * Creates and returns the control for loading maps
-     * @return  the control for loading maps
+     * @return  the control for loading stored maps
      */
     public GridPane getLoadControl() {
         GridPane gp = new GridPane();
@@ -111,6 +122,35 @@ public class RefImpl extends Application {
         gp.add(del, 3, 0);
         
         return gp;
+    }
+    
+    public Button getGPXLoadControl() {
+        Button load = new Button("Select GPX File");
+        load.setOnAction(e -> {
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Open GPX File");
+            fileChooser.getExtensionFilters().addAll(
+                    new ExtensionFilter("GPX Files", "*.gpx"),
+                    new ExtensionFilter("All Files", "*.*"));
+            File selectedFile = fileChooser.showOpenDialog(primaryStage);
+            if (selectedFile != null) {
+                System.out.println("file = " + selectedFile);
+                GPXReader reader = new GPXReader();
+                try {
+                    GPXPersistentMap gpxMap = reader.read(selectedFile.toURI().toURL());
+                    PersistentMap mMap = GPXPersistentMap.asFXMap(gpxMap, GPXType.TRACK);
+                    map.getMapStore().getMaps().put(mMap.getName(), mMap);
+                    map.getMapStore().selectMap(mMap.getName());
+                    createOrSelectMap(mMap.getName());
+                    map.setCenter(map.getMapStore().getMap(mMap.getName()).getRoutes().get(0).getOrigin().getLatLon());
+                    map.refresh();
+                } catch(Exception e1) {
+                    e1.printStackTrace();
+                }
+            }
+        });
+        
+        return load;
     }
     
     public void createMapPane() {

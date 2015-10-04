@@ -32,6 +32,8 @@ public class Route {
     protected Waypoint origin;
     protected Waypoint destination;
     
+    protected boolean interimMarkersVisible;
+    
     protected String id;
     
 
@@ -215,6 +217,14 @@ public class Route {
         retVal.remove(0);
         retVal.remove(retVal.size() - 1);
         return retVal;  
+    }
+    
+    public boolean getInterimMarkersVisible() {
+        return interimMarkersVisible;
+    }
+    
+    public void interimMarkersVisible(boolean b) {
+        this.interimMarkersVisible = b;
     }
     
     /**

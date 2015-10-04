@@ -1,5 +1,7 @@
 package ai.cogmission.fxmaps.model;
 
+import javafx.application.Platform;
+
 
 
 /**
@@ -8,17 +10,17 @@ package ai.cogmission.fxmaps.model;
  * @author cogmission
  */
 public class MapOptions {
-    protected LatLon center;
-    protected MapType mapType;
-    protected boolean mapMarker;
-    protected boolean overviewMapControl;
-    protected boolean panControl;
-    protected boolean rotateControl;
-    protected boolean scaleControl;
-    protected boolean streetViewControl;
-    protected int zoom;
-    protected boolean zoomControl;
-    protected boolean mapTypeControl;
+    public LatLon center;
+    public MapType mapType;
+    public boolean mapMarker;
+    public boolean overviewMapControl;
+    public boolean panControl;
+    public boolean rotateControl;
+    public boolean scaleControl;
+    public boolean streetViewControl;
+    public int zoom;
+    public boolean zoomControl;
+    public boolean mapTypeControl;
     
     /**
      * Sets the latitude/longitude the map will initially
@@ -138,23 +140,26 @@ public class MapOptions {
      * @return  a GMapsFX model MapOptions
      */
     public com.lynden.gmapsfx.javascript.object.MapOptions convert() {
-        com.lynden.gmapsfx.javascript.object.MapOptions ops = new com.lynden.gmapsfx.javascript.object.MapOptions()
-            .mapMarker(mapMarker)
-            .overviewMapControl(overviewMapControl)
-            .panControl(panControl)
-            .rotateControl(rotateControl)
-            .scaleControl(scaleControl)
-            .streetViewControl(streetViewControl)
-            .zoom(zoom == 0 ? 15 : zoom)
-            .zoomControl(zoomControl)
-            .mapTypeControl(mapTypeControl);
-        if(center != null) {
-            ops.center(center.toLatLong());
+        if(Platform.isFxApplicationThread()) {
+            com.lynden.gmapsfx.javascript.object.MapOptions ops = new com.lynden.gmapsfx.javascript.object.MapOptions()
+                .mapMarker(mapMarker)
+                .overviewMapControl(overviewMapControl)
+                .panControl(panControl)
+                .rotateControl(rotateControl)
+                .scaleControl(scaleControl)
+                .streetViewControl(streetViewControl)
+                .zoom(zoom == 0 ? 15 : zoom)
+                .zoomControl(zoomControl)
+                .mapTypeControl(mapTypeControl);
+            if(center != null) {
+                ops.center(center.toLatLong());
+            }
+            if(mapType != null) {
+                ops.mapType(mapType.convert());
+            }
+            
+            return ops;
         }
-        if(mapType != null) {
-            ops.mapType(mapType.convert());
-        }
-        
-        return ops;
+        return null;
     }
 }

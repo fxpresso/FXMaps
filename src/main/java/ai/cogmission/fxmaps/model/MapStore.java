@@ -173,17 +173,17 @@ public class MapStore {
         
         try {
             Gson gson = new Gson();
-            MapStore rs = gson.fromJson(
+            MapStore mapStore = gson.fromJson(
                 Files.newBufferedReader(FileSystems.getDefault().getPath(path)), MapStore.class);
             
-            for(String mapName : rs.getMaps().keySet()) {
-                rs.selectMap(mapName);
-                rs.postDeserialize();
+            for(String mapName : mapStore.getMaps().keySet()) {
+                mapStore.selectMap(mapName);
+                mapStore.postDeserialize();
             }
            
-            rs.storePath = path;
+            mapStore.storePath = path;
             
-            return rs;
+            return mapStore;
         }catch(MalformedJsonException m) {
             System.out.println(m.getMessage());
             File f = new File(path);

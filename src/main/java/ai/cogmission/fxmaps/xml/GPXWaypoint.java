@@ -4,12 +4,14 @@ import com.google.gson.annotations.SerializedName;
 
 
 public class GPXWaypoint {
-    @SerializedName("lat")
+    @SerializedName("@lat")
     public double lat;
-    @SerializedName("lon")
+    @SerializedName("@lon")
     public double lon;
     @SerializedName("ele")
     public double ele;
     @SerializedName("name")
     public String name;
+    @SerializedName("time")
+    public String time;
 }

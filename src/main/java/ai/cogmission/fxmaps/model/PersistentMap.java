@@ -3,6 +3,9 @@ package ai.cogmission.fxmaps.model;
 import java.util.ArrayList;
 import java.util.List;
 
+import ai.cogmission.fxmaps.ui.MapPane;
+import javafx.application.Platform;
+
 
 public class PersistentMap {
     protected List<Route> routes = new ArrayList<>();
@@ -78,6 +81,35 @@ public class PersistentMap {
     
     public void setMapOptions(MapOptions mapOptions) {
         this.mapOptions = mapOptions;
+    }
+    
+    /**
+     * Reifies all underlying JavaScript peers. This method is
+     * called from the GPXPersistentMap load process.
+     */
+    public void createUnderlying() {
+        if(mapOptions == null) {
+            mapOptions = MapPane.getDefaultMapOptions();
+        }
+        
+        // If deserializing in non-headless mode, build javascript peers
+        if(Platform.isFxApplicationThread()) {
+            for(Route r : routes) {
+                if(r.origin == null || r.origin.getMarker() == null) {
+                    continue;
+                }
+                
+                r.origin.getMarker().createUnderlying();
+                r.destination.getMarker().createUnderlying();
+                for(Waypoint wp : r.observableDelegate) {
+                    wp.getMarker().createUnderlying();
+                }
+                
+                for(Polyline line : r.lines) {
+                    line.createUnderlying();
+                }
+            }
+        }
     }
 
     @Override

@@ -15,4 +15,7 @@ public class GPXRoutePoint {
     
     @SerializedName("name")
     public String name;
+    
+    @SerializedName("time")
+    public String time;
 }

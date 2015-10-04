@@ -75,7 +75,6 @@ public class GPXReader {
         try {
             BufferedReader buff = new BufferedReader(new InputStreamReader(stream));
             map = reader.fromXml(buff, GPXPersistentMap.class);
-            System.out.println("got here");
         }catch(Exception e) {
             e.printStackTrace();
         }

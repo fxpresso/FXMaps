@@ -6,10 +6,7 @@ import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.value.ObservableValue;
-import javafx.event.EventHandler;
 import javafx.scene.Node;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.web.WebView;
 import ai.cogmission.fxmaps.event.MapEventHandler;
 import ai.cogmission.fxmaps.event.MapEventType;
@@ -127,6 +124,13 @@ public interface Map extends MapComponentInitializedListener {
      * Centers this {@code Map} on the user's current city location.
      */
     public void centerMapOnLocal();
+    /**
+     * Sets the center location of the map to the specified lat/lon 
+     * coordinates.
+     * 
+     * @param ll    the lat/lon coordinates around which to center the map.
+     */
+    public void setCenter(LatLon ll);
     /**
      * Adds a {@link MapInitializedListener} to the {@code Map}
      * 

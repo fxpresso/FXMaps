@@ -60,7 +60,7 @@ import com.lynden.gmapsfx.javascript.object.LatLong;
  *
  */
 public class MapPane extends BorderPane implements Map {
-    private static final MapOptions DEFAULT_MAP_OPTIONS = getMapDefaultOptions();
+    private static final MapOptions DEFAULT_MAP_OPTIONS = getDefaultMapOptions();
     private final MapEventHandler DEFAULT_MAPEVENT_HANDLER = getDefaultMapEventHandler();
     private MapStore MAP_STORE;
     private boolean defaultMapEventHandlerInstalled = true;
@@ -149,6 +149,7 @@ public class MapPane extends BorderPane implements Map {
     @Override
     public void addMap(String mapName) {
         MAP_STORE.addMap(mapName);
+        MAP_STORE.getMap(mapName).setMapOptions(DEFAULT_MAP_OPTIONS);
     }
     
     /**
@@ -209,9 +210,7 @@ public class MapPane extends BorderPane implements Map {
             
             // Locates the user's aprox. location and centers the map there.
             try {
-                String ip = Locator.getIp();
-                Location l = Locator.getIPLocation(ip);
-                googleMap.setCenter(new LatLong(l.getLatitude(), l.getLongitude()));
+                centerMapOnLocal();
                 
                 MAP_STORE = MapStore.load(MapStore.DEFAULT_STORE_PATH);
                 
@@ -308,8 +307,23 @@ public class MapPane extends BorderPane implements Map {
 
     @Override
     public void centerMapOnLocal() {
-        // TODO Auto-generated method stub
-        
+        try {
+            String ip = Locator.getIp();
+            Location l = Locator.getIPLocation(ip);
+            googleMap.setCenter(new LatLong(l.getLatitude(), l.getLongitude()));
+        }catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    /**
+     * Sets the center location of the map to the specified lat/lon 
+     * coordinates.
+     * 
+     * @param ll    the lat/lon coordinates around which to center the map.
+     */
+    public void setCenter(LatLon ll) {
+        googleMap.setCenter(ll.toLatLong());
     }
 
     @Override
@@ -561,7 +575,11 @@ public class MapPane extends BorderPane implements Map {
         for(Route r : routes) {
             currentRoute = r;
             for(Waypoint wp : r.getWaypoints()) {
-                displayWaypoint(wp);
+                if(r.getInterimMarkersVisible() || (!r.getInterimMarkersVisible() && 
+                    (wp.equals(r.getOrigin()) || wp.equals(r.getDestination())))) {
+                    
+                    displayWaypoint(wp);
+                }
             }
             for(Polyline p : r.getLines()) {
                 displayShape(p);
@@ -586,6 +604,10 @@ public class MapPane extends BorderPane implements Map {
     @Override
     public void clearMap() {
         currentRoute = null;
+        
+        if(MAP_STORE.getSelectedMapName() == null || MAP_STORE.getMap(MAP_STORE.getSelectedMapName()) == null) {
+            return;
+        }
         
         for(Route r : MAP_STORE.getMap(MAP_STORE.getSelectedMapName()).getRoutes()) {
             for(Waypoint w : r.getWaypoints()) {
@@ -671,7 +693,7 @@ public class MapPane extends BorderPane implements Map {
      * 
      * @return      the constructed options
      */
-    private static PolylineOptions getDefaultPolylineOptions() {
+    public static PolylineOptions getDefaultPolylineOptions() {
         return new PolylineOptions()
             .strokeColor("red")
             .visible(true)
@@ -682,7 +704,7 @@ public class MapPane extends BorderPane implements Map {
      * Returns the default {@link MapOptions}
      * @return  the default MapOptions
      */
-    private static MapOptions getMapDefaultOptions() {
+    public static MapOptions getDefaultMapOptions() {
         MapOptions options = new MapOptions();
         options.mapMarker(true)
             .zoom(15)

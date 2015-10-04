@@ -50,14 +50,10 @@ public enum MarkerType {
     public String iconPath() {
         if(chr() == 'A' - 1) next();
         
-        String retVal = path.concat(Character.toString(chr()).concat(".png"));
-        
-        return retVal;
+        return path.concat(Character.toString(chr()).concat(".png"));
     }
     
     public String nextPath() {
-        String retVal = path.concat(Character.toString(next()).concat(".png"));
-        System.out.println("retVal = " + retVal);
-        return retVal;
+        return path.concat(Character.toString(next()).concat(".png"));
     }
 }
