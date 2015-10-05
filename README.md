@@ -26,6 +26,7 @@ I will keep its status up to date until I reach the point where I can start work
 **(2015-10-4)**
 * Now load GPX Files!
 * New GPX object model for loading GPX files
+![FXMaps Demo](http://metaware.us/FXMap2.png)
 
 **(2015-10-2)**
 * Multiple routes now save and load correctly
