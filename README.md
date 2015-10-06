@@ -2,6 +2,7 @@
 <img src="http://metaware.us/images/fx-maps.png" alt="FXMaps">
 </p>
 
+[![htm.java awesomeness](https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg)](http://cogmission.ai)
 
 **NOTE: Minimum JavaSE version is 1.8**
 
