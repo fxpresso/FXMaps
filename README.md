@@ -2,6 +2,7 @@
 <img src="http://metaware.us/images/fx-maps.png" alt="FXMaps">
 </p>
 
+[![htm.java awesomeness](https://cdn.rawgit.com/sindresorhus/awesome/d7305f38d29fed78fa85652e3a63e154dd8e8829/media/badge.svg)](http://cogmission.ai)
 
 **NOTE: Minimum JavaSE version is 1.8**
 
@@ -23,6 +24,11 @@ ai.cogmission.fxmaps.RefImpl
 I will keep its status up to date until I reach the point where I can start work on the project that uses this library (see [Nostromo](https://github.com/cogmission/Nostromo))
 
 ***
+**(2015-10-4)**
+* Now load GPX Files!
+* New GPX object model for loading GPX files
+![FXMaps Demo](http://metaware.us/FXMap2.png)
+
 **(2015-10-2)**
 * Multiple routes now save and load correctly
 * Can save a load multiple maps from the combo list
