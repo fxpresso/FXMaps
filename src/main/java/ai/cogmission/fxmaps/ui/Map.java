@@ -274,6 +274,12 @@ public interface Map extends MapComponentInitializedListener {
      */
     public void displayRoutes(List<Route> routes);
     /**
+     * Displays the specified {@link Route} on the map
+     * 
+     * @param route the route to display
+     */
+    public void displayRoute(Route route);
+    /**
      * Redraws the map
      */
     public void refresh();

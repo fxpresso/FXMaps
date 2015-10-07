@@ -475,7 +475,7 @@ public class MapPane extends BorderPane implements Map {
             
             String id = waypoint.getMarker().getMarkerOptions().getIcon();
             id = id.substring(id.lastIndexOf("M"), id.lastIndexOf("."));
-            contextMenu.getItems().get(0).setText("Delete " + id);
+            contextMenu.getItems().get(0).setText("Clear " + id);
             
             LatLong cxtLL = new LatLong((JSObject) o.getMember("latLng"));
             Point2D p = googleMap.fromLatLngToPoint(cxtLL);
@@ -574,19 +574,30 @@ public class MapPane extends BorderPane implements Map {
     public void displayRoutes(List<Route> routes) {
         for(Route r : routes) {
             currentRoute = r;
-            for(Waypoint wp : r.getWaypoints()) {
-                if(r.getInterimMarkersVisible() || (!r.getInterimMarkersVisible() && 
-                    (wp.equals(r.getOrigin()) || wp.equals(r.getDestination())))) {
-                    
-                    displayWaypoint(wp);
-                }
-            }
-            for(Polyline p : r.getLines()) {
-                displayShape(p);
-            }
+            displayRoute(r);
         }
         
         refresh();
+    }
+    
+    /**
+     * Displays the specified {@link Route} on the map
+     * 
+     * @param route the route to display
+     */
+    @Override
+    public void displayRoute(Route route) {
+        for(Waypoint wp : route.getWaypoints()) {
+            if(route.getInterimMarkersVisible() || (!route.getInterimMarkersVisible() && 
+                (wp.equals(route.getOrigin()) || wp.equals(route.getDestination())))) {
+                
+                displayWaypoint(wp);
+            }
+        }
+        
+        for(Polyline p : route.getLines()) {
+            displayShape(p);
+        }
     }
     
     /**

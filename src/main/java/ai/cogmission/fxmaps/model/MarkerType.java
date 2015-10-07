@@ -2,7 +2,15 @@ package ai.cogmission.fxmaps.model;
 
 import java.util.EnumMap;
 
-
+/**
+ * This {@code MarkerType} enum contains functionality to "increment" the
+ * next letter of the next {@link Marker} icon whose path will be returned.
+ * Each marker color maintains its own letter index, so incrementing only 
+ * occurs for that color marker.
+ * 
+ * @author cogmission
+ *
+ */
 public enum MarkerType {
     BLUE("http://metaware.us/images/markers/blue_Marker"), 
     GREEN("http://metaware.us/images/markers/green_Marker"),
@@ -29,10 +37,24 @@ public enum MarkerType {
         this.path = path;
     }
     
+    /**
+     * Returns the current char indexed by this {@code MarkerType}
+     * See the explanation for the "increment" functionality in the class
+     * java doc.
+     * 
+     * @return  the currently indexed char for which a path is maintained
+     * to its corresponding icon.
+     */
     public char chr() {
         return cursors.get(this);
     }
     
+    /**
+     * Returns the next char in the sequence (from 'A' to 'Z') for a 
+     * particular {@code MarkerType} (distinguished by color).
+     * 
+     * @return
+     */
     public char next() {
         char retVal = cursors.get(this);
         retVal = retVal == 'Z' ? 'A' - 1 : retVal;
@@ -41,6 +63,14 @@ public enum MarkerType {
         return retVal;
     }
     
+    /**
+     * This {@code MarkerType} enum contains functionality to "increment" the
+     * next letter of the next {@link Marker} icon whose path will be returned.
+     * Each marker color maintains its own letter index, so incrementing only 
+     * occurs for that color marker.
+     * </p><p>
+     * This method resets the indexes for all marker colors
+     */
     public static void reset() {
         for(MarkerType mt : values()) {
             cursors.put(mt, new Character((char)('A' - 1)));
