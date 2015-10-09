@@ -3,14 +3,31 @@ package ai.cogmission.fxmaps.demo;
 import java.io.File;
 import java.util.Collection;
 
+import javafx.animation.Interpolator;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
+import javafx.beans.property.DoubleProperty;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.geometry.Bounds;
+import javafx.geometry.Insets;
+import javafx.geometry.Point2D;
+import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Separator;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
+import javafx.util.Duration;
 import ai.cogmission.fxmaps.model.PersistentMap;
 import ai.cogmission.fxmaps.ui.Map;
 import ai.cogmission.fxmaps.xml.GPXPersistentMap;
@@ -34,12 +51,18 @@ public class RefImplToolBar extends ToolBar {
     
     private ToggleButton simulationBtn;
     private ToggleButton directionsBtn;
+    
+    private Stage popup;
     private GridPane loadPane;
     private ComboBox<String> mapCombo;
+    private ToggleButton flyout;
+    
+    private boolean shownOnce;
     
     public RefImplToolBar(RefImpl parent, Map map) {
         this.parent = parent;
         this.map = map;
+        initMapSelector();
         initializeToolBar();
         configureToolBar();
     }
@@ -55,7 +78,7 @@ public class RefImplToolBar extends ToolBar {
             new Separator(),
             getGPXLoadControl(),
             new Separator(),
-            loadPane = getLoadControl()
+            flyout = new ToggleButton("Create / Select Map")
         );
     }
     
@@ -95,6 +118,102 @@ public class RefImplToolBar extends ToolBar {
         simulationBtn.setOnAction(e -> map.setRouteSimulationMode(simulationBtn.isSelected()));
         directionsBtn.setOnAction(e -> map.setDirectionsVisible(directionsBtn.isSelected()));
         directionsBtn.setSelected(true);
+        flyout.setOnAction(e -> flyOut());
+    }
+    
+    Pane pn;
+    StackPane sp = new StackPane();
+    public void flyOut() {
+        if(!flyout.isSelected()) {
+            System.out.println("got click");
+            popup.hide();
+            flyout.setSelected(false);
+        }else{
+            
+            if(!shownOnce) {
+                sp = new StackPane();
+                sp.setPrefSize(RefImplToolBar.this.getWidth(), 100);
+                
+                pn = new Pane();
+                pn.setStyle("-fx-background-color: rgba(0, 0, 0, 0.3);");
+                loadPane = getLoadControl();
+                pn.setManaged(false);
+                pn.setVisible(true);
+                pn.getChildren().add(loadPane);
+                
+                sp.getChildren().add(pn);
+                sp.setLayoutX(0);
+                sp.setLayoutY(0);
+                sp.setStyle("-fx-background-color: rgba(0, 0, 0, 0.0)");
+                popup.setHeight(100);
+                popup.setWidth(RefImplToolBar.this.getWidth());
+                
+                Scene popupScene = new Scene(sp, Color.TRANSPARENT);
+                popup.initStyle(StageStyle.TRANSPARENT);
+                popup.initOwner(parent.getPrimaryStage());
+                popup.setScene(popupScene);
+                popup.setOnShown(e -> {
+                    if(!shownOnce) {
+                        pn.resize(loadPane.getWidth(), loadPane.getHeight());
+                        loadPane.relocate(0, pn.getHeight() - loadPane.getHeight());
+                        pn.requestLayout();
+                    }
+                    
+                    
+                    Point2D fp = flyout.localToScene(0.0, RefImplToolBar.this.getLayoutBounds().getHeight() +
+                        RefImplToolBar.this.getInsets().getBottom() + RefImplToolBar.this.getInsets().getTop());
+                    pn.setLayoutX(fp.getX());
+                    pn.setLayoutY(-pn.getHeight());
+                    popup.setX(parent.getPrimaryStage().getX());
+                    popup.setY(parent.getPrimaryStage().getY() + fp.getY());
+                    shownOnce = true;
+                    
+                });
+            }
+            //popup.initModality(Modality.WINDOW_MODAL);
+            
+            
+            popup.show();
+            doFlyIn();
+        }
+        
+    }
+    
+    Timeline tl = new Timeline();
+    public void doFlyIn() {
+        popup.show();
+        tl.setCycleCount(1);
+        double currentY = pn.getLayoutY() ;
+//        Point2D fp = flyout.localToScene(0.0, RefImplToolBar.this.getLayoutBounds().getMaxY());
+        double destY = currentY + pn.getHeight();//parent.getPrimaryStage().getY() + fp.getY() + flyout.getScene().getY();
+        DoubleProperty y = new SimpleDoubleProperty(currentY);
+        y.addListener((obs, oldY, newY) -> {
+            pn.setLayoutY(newY.doubleValue());
+            //Bounds b = RefImplToolBar.this.getLayoutBounds();
+            //Rectangle visibleArea = new Rectangle(0, destY, b.getWidth(), b.getHeight());
+            //pn.setClip(visibleArea);
+        });
+        
+        
+        
+        
+        Interpolator interpolator = Interpolator.SPLINE(0.5, 0.1, 0.1, 0.5);
+        KeyValue keyValue = new KeyValue(y, destY, interpolator);
+        //create a keyFrame with duration 4s
+        KeyFrame keyFrame = new KeyFrame(Duration.millis(500), keyValue);
+        //add the keyframe to the timeline
+        tl.getKeyFrames().add(keyFrame);
+        
+        tl.play();
+    }
+    
+    
+    public void initMapSelector() {
+        popup = new Stage();
+        mapCombo = new ComboBox<>();
+        mapCombo.setEditable(true);
+        mapCombo.setPromptText("Type or select map name.");
+        mapCombo.valueProperty().addListener(parent.getMapSelectionListener());
     }
     
     /**
@@ -103,12 +222,8 @@ public class RefImplToolBar extends ToolBar {
      */
     public GridPane getLoadControl() {
         GridPane gp = new GridPane();
+        gp.setPadding(new Insets(5, 5, 5, 5));
         gp.setHgap(5);
-        
-        mapCombo = new ComboBox<>();
-        mapCombo.setEditable(true);
-        mapCombo.setPromptText("Type or select name.");
-        mapCombo.valueProperty().addListener(parent.getMapSelectionListener());
         
         Button add = new Button("Add");
         add.setOnAction(e -> parent.createOrSelectMap(mapCombo.getSelectionModel().getSelectedItem()));
