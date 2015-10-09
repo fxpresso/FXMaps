@@ -33,6 +33,7 @@ import ai.cogmission.fxmaps.ui.Map;
 import ai.cogmission.fxmaps.xml.GPXPersistentMap;
 import ai.cogmission.fxmaps.xml.GPXReader;
 import ai.cogmission.fxmaps.xml.GPXType;
+import ai.cogmission.fxpresso.ui.Flyout;
 
 /**
  * <p>
