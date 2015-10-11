@@ -261,6 +261,13 @@ public interface Map extends MapComponentInitializedListener {
      */
     public void removeRoute(Route route);
     /**
+     * Clears the specified {@link Route} of all its contents
+     * (i.e. Lines and Markers)
+     * 
+     * @param route     the route to be cleared
+     */
+    public void clearRoute(Route route);
+    /**
      * Selects the specified {@link Route}, designating it
      * to be the currently focused route.
      * 
@@ -279,6 +286,12 @@ public interface Map extends MapComponentInitializedListener {
      * @param route the route to display
      */
     public void displayRoute(Route route);
+    /**
+     * Returns the {@link Route} with the specified name.
+     * @param name  the name of the route to return
+     * @return  the specified route
+     */
+    public Route getRoute(String name);
     /**
      * Redraws the map
      */

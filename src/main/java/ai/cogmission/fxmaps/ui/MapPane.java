@@ -555,6 +555,32 @@ public class MapPane extends BorderPane implements Map {
     }
     
     /**
+     * Clears the specified {@link Route} of all its contents
+     * (i.e. Lines and Markers)
+     * 
+     * @param route     the route to be cleared
+     */
+    @Override
+    public void clearRoute(Route route) {
+        for(Waypoint w : route.getWaypoints()) {
+            googleMap.removeMarker(w.getMarker().convert());
+        }
+        for(Polyline line : route.getLines()) {
+            googleMap.removeMapShape(line.convert());
+        }
+    }
+    
+    /**
+     * Returns the {@link Route} with the specified name.
+     * @param name  the name of the route to return
+     * @return  the specified route
+     */
+    @Override
+    public Route getRoute(String name) {
+        return MAP_STORE.getMap(MAP_STORE.getSelectedMapName()).getRoute(name);
+    }
+    
+    /**
      * Selects the specified {@link Route}, designating it
      * to be the currently focused route.
      * 
@@ -628,6 +654,11 @@ public class MapPane extends BorderPane implements Map {
                 googleMap.removeMapShape(line.convert());
             }
         }
+    }
+    
+    public void clearRoute(String name) {
+        
+        
     }
 
     @Override

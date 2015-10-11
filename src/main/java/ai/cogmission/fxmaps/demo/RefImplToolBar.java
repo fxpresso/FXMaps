@@ -3,37 +3,26 @@ package ai.cogmission.fxmaps.demo;
 import java.io.File;
 import java.util.Collection;
 
-import javafx.animation.Interpolator;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.Timeline;
-import javafx.beans.property.DoubleProperty;
-import javafx.beans.property.SimpleDoubleProperty;
 import javafx.geometry.Insets;
-import javafx.geometry.Point2D;
-import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.StackPane;
+import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
-import javafx.stage.Stage;
-import javafx.stage.StageStyle;
-import javafx.util.Duration;
 import ai.cogmission.fxmaps.model.PersistentMap;
 import ai.cogmission.fxmaps.ui.Map;
 import ai.cogmission.fxmaps.xml.GPXPersistentMap;
 import ai.cogmission.fxmaps.xml.GPXReader;
 import ai.cogmission.fxmaps.xml.GPXType;
-import ai.cogmission.fxpresso.ui.Flyout;
+import fxpresso.tidbit.ui.Flyout;
 
 /**
  * <p>
@@ -50,23 +39,21 @@ public class RefImplToolBar extends ToolBar {
     
     private Map map;
     
-    private ToggleButton simulationBtn;
     private ToggleButton directionsBtn;
     
-    private Stage popup;
-    private GridPane loadPane;
     private ComboBox<String> mapCombo;
-    private ToggleButton flyout;
-    
-    private Flyout flyover;
+    private ComboBox<String> routeCombo;
+    private Flyout mapFlyout;
+    private Flyout routeFlyout;
     private ToggleButton mapChooser;
+    private ToggleButton routeChooser;
     
-    private boolean shownOnce;
     
     public RefImplToolBar(RefImpl parent, Map map) {
         this.parent = parent;
         this.map = map;
         initMapSelector();
+        initRouteSelector();
         initializeToolBar();
         configureToolBar();
     }
@@ -76,14 +63,13 @@ public class RefImplToolBar extends ToolBar {
      */
     public void initializeToolBar() {
         getItems().addAll(
-            simulationBtn = new ToggleButton("Simulation Mode"),
-            new Separator(),
             directionsBtn = new ToggleButton("Directions"),
             new Separator(),
             getGPXLoadControl(),
             new Separator(),
-            //flyout = new ToggleButton("Create / Select Map")
-            flyover = new Flyout(mapChooser = new ToggleButton("Create / Select Map"), getLoadControl())
+            mapFlyout = new Flyout(mapChooser = new ToggleButton("Create / Select Map"), getMapControl()),
+            new Separator(),
+            routeFlyout = new Flyout(routeChooser = new ToggleButton("Create / Select Route"), getRouteControl())
         );
     }
     
@@ -120,111 +106,30 @@ public class RefImplToolBar extends ToolBar {
      * Add the ToolBar's action handlers etc.
      */
     public void configureToolBar() {
-        simulationBtn.setOnAction(e -> map.setRouteSimulationMode(simulationBtn.isSelected()));
         directionsBtn.setOnAction(e -> map.setDirectionsVisible(directionsBtn.isSelected()));
         directionsBtn.setSelected(true);
-        //flyout.setOnAction(e -> flyOut());
+        
         mapChooser.setOnAction(e -> {
-            if(flyover.flyoutShowing()) {
-                flyover.dismiss();
+            if(mapFlyout.flyoutShowing()) {
+                mapFlyout.dismiss();
             }else{
-                flyover.flyOut();
+                mapFlyout.flyout();
+            }
+        });
+        
+        routeChooser.setOnAction(e -> {
+            if(routeFlyout.flyoutShowing()) {
+                routeFlyout.dismiss();
+            }else{
+                routeFlyout.flyout();
             }
         });
     }
     
-    Pane userNodeContainer;
-    StackPane clipContainer = new StackPane();
-    public void flyOut() {
-        if(!flyout.isSelected()) {
-            System.out.println("got click");
-            popup.hide();
-            flyout.setSelected(false);
-        }else{
-            
-            if(!shownOnce) {
-                clipContainer = new StackPane();
-                
-                userNodeContainer = new Pane();
-                userNodeContainer.setStyle("-fx-background-color: rgba(0, 0, 0, 0.3);");
-                loadPane = getLoadControl();
-                userNodeContainer.setManaged(false);
-                userNodeContainer.setVisible(true);
-                userNodeContainer.getChildren().add(loadPane);
-                
-                clipContainer.getChildren().add(userNodeContainer);
-                clipContainer.setStyle("-fx-background-color: rgba(0, 0, 0, 0.0)");
-                
-                Scene popupScene = new Scene(clipContainer, Color.TRANSPARENT);
-                popup.initStyle(StageStyle.TRANSPARENT);
-                popup.initOwner(parent.getPrimaryStage());
-                popup.setScene(popupScene);
-                
-                popup.setOnShown(e -> {
-                    Point2D fp = flyout.localToScreen(0.0, 0.0);
-                    
-                    if(!shownOnce) {
-                        userNodeContainer.resize(loadPane.getWidth(), loadPane.getHeight());
-                        
-                        clipContainer.setLayoutX(0);
-                        clipContainer.setLayoutY(0);
-                        userNodeContainer.setLayoutX(0);
-                    }
-                    
-                    //System.out.println("flyout size = " + flyout.getLayoutBounds() + ", fp = " + fp);
-                    clipContainer.resize(loadPane.getLayoutBounds().getWidth(), loadPane.getLayoutBounds().getHeight());
-                    clipContainer.setVisible(true);
-                    
-                    userNodeContainer.setLayoutY(-userNodeContainer.getHeight());
-                    
-                    System.out.println("popup = " + popup.getX() + " ,  " + popup.getY() + ",  " + popup.getWidth() + ",  " + popup.getHeight());
-                    System.out.println("pn = " + userNodeContainer.getLayoutX() + " ,  " + userNodeContainer.getLayoutY() + ",  " + userNodeContainer.getWidth() + ", " + userNodeContainer.getHeight());
-                    System.out.println("sp = " + clipContainer.getLayoutX() + " ,  " + clipContainer.getLayoutY() + ",  " + clipContainer.getWidth() + ", " + clipContainer.getHeight());
-                    System.out.println("loadpane = " + loadPane.getWidth() + ", " + loadPane.getHeight());
-                    
-                    clipContainer.requestLayout();
-                    popup.setX(fp.getX());
-                    popup.setY(fp.getY() + flyout.getHeight());
-                    popup.setWidth(loadPane.getWidth());
-                    popup.setHeight(loadPane.getHeight());
-                    clipContainer.requestFocus();
-                    shownOnce = true;
-                    
-                });
-            }
-            //popup.initModality(Modality.WINDOW_MODAL);
-            
-            
-            popup.show();
-            doFlyIn();
-        }
-        
-    }
-    
-    Timeline tl = new Timeline();
-    public void doFlyIn() {
-        popup.show();
-        tl.setCycleCount(1);
-        double currentY = userNodeContainer.getLayoutY() ;
-        double destY = currentY + userNodeContainer.getHeight();
-        DoubleProperty y = new SimpleDoubleProperty(currentY);
-        y.addListener((obs, oldY, newY) -> {
-            userNodeContainer.setLayoutY(newY.doubleValue());
-        });
-        
-        Interpolator interpolator = Interpolator.SPLINE(0.5, 0.1, 0.1, 0.5);
-        KeyValue keyValue = new KeyValue(y, destY, interpolator);
-        //create a keyFrame with duration 4s
-        KeyFrame keyFrame = new KeyFrame(Duration.millis(500), keyValue);
-        //add the keyframe to the timeline
-        tl.getKeyFrames().add(keyFrame);
-        
-        tl.play();
-    }
-    
-    
+    /**
+     * Initializes the control for choosing/creating maps
+     */
     public void initMapSelector() {
-        popup = new Stage();
         mapCombo = new ComboBox<>();
         mapCombo.setEditable(true);
         mapCombo.setPromptText("Type or select map name.");
@@ -232,16 +137,26 @@ public class RefImplToolBar extends ToolBar {
     }
     
     /**
+     * Initializes the control for choosing/creating maps
+     */
+    public void initRouteSelector() {
+        routeCombo = new ComboBox<>();
+        routeCombo.setEditable(true);
+        routeCombo.setPromptText("Type or select route name.");
+        routeCombo.valueProperty().addListener(parent.getMapSelectionListener());
+    }
+    
+    /**
      * Creates and returns the control for loading maps
      * @return  the control for loading stored maps
      */
-    public GridPane getLoadControl() {
+    public GridPane getMapControl() {
         GridPane gp = new GridPane();
         gp.setPadding(new Insets(5, 5, 5, 5));
         gp.setHgap(5);
         
         Label l = new Label("Select or enter map name:");
-        l.setFont(Font.font(l.getFont().getFamily(), 10));
+        l.setFont(Font.font(l.getFont().getFamily(), 12));
         l.setTextFill(Color.WHITE);
         Button add = new Button("Add");
         add.setOnAction(e -> parent.createOrSelectMap(mapCombo.getSelectionModel().getSelectedItem()));
@@ -251,6 +166,42 @@ public class RefImplToolBar extends ToolBar {
         gp.add(mapCombo, 0, 1, 2, 1);
         gp.add(add, 2, 1);
         gp.add(del, 3, 1);
+        
+        return gp;
+    }
+    
+    /**
+     * Creates and returns the control for loading maps
+     * @return  the control for loading stored maps
+     */
+    public GridPane getRouteControl() {
+        GridPane gp = new GridPane();
+        gp.setPadding(new Insets(5, 5, 5, 5));
+        gp.setHgap(5);
+        
+        HBox rsMode = new HBox();
+        CheckBox cb = new CheckBox("Add Waypoint");
+        cb.setTextFill(Color.WHITE);
+        cb.setOnAction(e -> {
+            map.setRouteSimulationMode(cb.isSelected());
+        });
+        rsMode.getChildren().add(cb);
+        Label l = new Label("Select or enter route name:");
+        l.setFont(Font.font(l.getFont().getFamily(), 10));
+        l.setTextFill(Color.WHITE);
+        Button add = new Button("Add");
+        //add.setOnAction();
+        Button clr = new Button("Clear route");
+        clr.setOnAction(e -> map.clearRoute(map.getRoute(routeCombo.getSelectionModel().getSelectedItem())));
+        Button del = new Button("Delete route");
+        del.setOnAction(e -> map.removeRoute(map.getRoute(routeCombo.getSelectionModel().getSelectedItem())));
+        
+        gp.add(l, 0, 0, 2, 1);
+        gp.add(rsMode, 2, 0, 2, 1);
+        gp.add(routeCombo, 0, 1, 2, 1);
+        gp.add(add, 2, 1);
+        gp.add(clr, 3, 1);
+        gp.add(del, 4, 1);
         
         return gp;
     }
