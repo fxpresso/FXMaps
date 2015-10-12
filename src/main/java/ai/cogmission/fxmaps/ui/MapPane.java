@@ -3,6 +3,7 @@ package ai.cogmission.fxmaps.ui;
 import java.util.ArrayList;
 import java.util.List;
 
+import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.IntegerProperty;
 import javafx.beans.property.ObjectProperty;
@@ -10,9 +11,18 @@ import javafx.beans.value.ObservableValue;
 import javafx.geometry.Point2D;
 import javafx.scene.Node;
 import javafx.scene.control.ContextMenu;
+import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
+import javafx.scene.layout.Border;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.layout.BorderStroke;
+import javafx.scene.layout.BorderStrokeStyle;
+import javafx.scene.layout.BorderWidths;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.scene.web.WebView;
 import javafx.stage.PopupWindow.AnchorLocation;
 import javafx.stage.Window;
@@ -34,6 +44,7 @@ import ai.cogmission.fxmaps.model.MapType;
 import ai.cogmission.fxmaps.model.Marker;
 import ai.cogmission.fxmaps.model.MarkerOptions;
 import ai.cogmission.fxmaps.model.MarkerType;
+import ai.cogmission.fxmaps.model.PersistentMap;
 import ai.cogmission.fxmaps.model.Polyline;
 import ai.cogmission.fxmaps.model.PolylineOptions;
 import ai.cogmission.fxmaps.model.Route;
@@ -59,7 +70,15 @@ import com.lynden.gmapsfx.javascript.object.LatLong;
  * @author cogmission
  *
  */
-public class MapPane extends BorderPane implements Map {
+public class MapPane extends StackPane implements Map {
+    private static final String DEFAULT_OVERLAY_MESSAGE = 
+        "Click \"Create / Select Map\" To:\n\n" +
+        "\t" + '\u2022' + " Create a new map\n\n \t\t-- or -- \n\n" + 
+        "\t" + '\u2022' + " Select a loaded map\n\n \t\t-- or -- \n\n" + 
+        "\t" + '\u2022' + " Load a GPX File";
+    
+    private BorderPane contentPane = new BorderPane();
+    
     private static final MapOptions DEFAULT_MAP_OPTIONS = getDefaultMapOptions();
     private final MapEventHandler DEFAULT_MAPEVENT_HANDLER = getDefaultMapEventHandler();
     private MapStore MAP_STORE;
@@ -79,11 +98,15 @@ public class MapPane extends BorderPane implements Map {
     
     protected List<MapReadyListener> readyListeners = new ArrayList<>();
     
-    protected boolean isRouteSimMode;
+    protected boolean overlayVisible;
     
     protected ContextMenu contextMenu;
     protected MapObject currMapObj;
    
+    protected StackPane dimmer;
+    protected Label dimmerMessage;
+    
+    protected Map.Mode currentMode = Map.Mode.NORMAL;
     
     
     /**
@@ -93,8 +116,10 @@ public class MapPane extends BorderPane implements Map {
         setPrefWidth(1000);
         setPrefHeight(780);
         
+        getChildren().add(contentPane);
+        
         mapComponent = new GoogleMapView(); 
-        setCenter(mapComponent);
+        contentPane.setCenter(mapComponent);
         
         contextMenu = getContextMenu();
         contextMenu.hideOnEscapeProperty().set(true);
@@ -109,6 +134,8 @@ public class MapPane extends BorderPane implements Map {
         directionsPane = new DirectionsPane();
         directionsPane.setPrefWidth(200);
         setDirectionsVisible(false);
+        
+        
     }
     
     public ContextMenu getContextMenu() {
@@ -143,6 +170,9 @@ public class MapPane extends BorderPane implements Map {
      */
     @Override
     public void initialize() {
+        // first complete ui initialization
+        configureOverlay();
+        
         mapComponent.addMapInializedListener(this);
     }
     
@@ -181,17 +211,31 @@ public class MapPane extends BorderPane implements Map {
     }
     
     /**
+     * Sets the map mode to one of {@link Mode}
+     * @param mode  the mode to set
+     */
+    public void setMode(Mode mode) {
+        currentMode = mode;
+        
+        if(mode == Mode.ROUTE_ENTER) {
+            setBorder(new Border(new BorderStroke(Color.GREEN, BorderStrokeStyle.SOLID, null, new BorderWidths(5))));
+        }else{
+            setBorder(null);
+        }
+    }
+    
+    /**
      * Makes the right {@link DirectionsPane} visible or invisible.
      * @param b
      */
     @Override
     public void setDirectionsVisible(boolean b) {
         if(b) {
-            if(getRight() == null) {
-                setRight(directionsPane);
+            if(contentPane.getRight() == null) {
+                contentPane.setRight(directionsPane);
             }
         }else{
-            setRight(null);
+            contentPane.setRight(null);
         }
     }
     
@@ -262,23 +306,11 @@ public class MapPane extends BorderPane implements Map {
     }
     
     /**
-     * Sets the flag indicating which mode the {@code Map} is currently in.
-     * "Regular mode" is the mode where routes are loaded from external 
-     * sources, and "Route Simulation Mode" is where the user can click on 
-     * the map and create new routes.
-     * 
-     * @param b
-     */
-    public void setRouteSimulationMode(boolean b) {
-        isRouteSimMode = b;
-    }
-    
-    /**
      * Adds a {@link Node} acting as a toolbar
      * @param n a toolbar
      */
     public void addToolBar(Node n) {
-        setTop(n);
+        contentPane.setTop(n);
     }
     
     /**
@@ -539,8 +571,11 @@ public class MapPane extends BorderPane implements Map {
      */
     @Override
     public void addRoute(Route route) {
-        MAP_STORE.getMap(MAP_STORE.getSelectedMapName()).addRoute(route);
-        MAP_STORE.store();
+        PersistentMap currentMap = MAP_STORE.getMap(MAP_STORE.getSelectedMapName());
+        if(currentMap.getRoute(route.getName()) == null) {
+            MAP_STORE.getMap(MAP_STORE.getSelectedMapName()).addRoute(route);
+            MAP_STORE.store();
+        }
     }
     
     /**
@@ -646,6 +681,15 @@ public class MapPane extends BorderPane implements Map {
             return;
         }
         
+        clearMap(MAP_STORE.getSelectedMapName());
+    }
+    
+    /**
+     * Removes all displayed {@link Route}s from the map specified by mapName
+     * 
+     * @param mapName   the name of the map to remove
+     */
+    public void clearMap(String mapName) {
         for(Route r : MAP_STORE.getMap(MAP_STORE.getSelectedMapName()).getRoutes()) {
             for(Waypoint w : r.getWaypoints()) {
                 googleMap.removeMarker(w.getMarker().convert());
@@ -656,9 +700,39 @@ public class MapPane extends BorderPane implements Map {
         }
     }
     
+    /**
+     * Deletes the currently selected map and its persistent storage.
+     * 
+     * @param  mapName  the name of the map to delete
+     */
+    public void deleteMap(String mapName) {
+        MAP_STORE.deleteMap(mapName);
+        MAP_STORE.store();
+    }
+    
+    /**
+     * Removes all {@link Waypoint}s and {@link MapObject}s (Lines) 
+     * from the {@link Route} specified by name.
+     * 
+     * @param name  name of the {@link Route} to clear.
+     */
     public void clearRoute(String name) {
-        
-        
+        for(Route r : MAP_STORE.getMap(MAP_STORE.getSelectedMapName()).getRoutes()) {
+            if(r.getName().equals(name)) {
+                for(Waypoint w : r.getWaypoints()) {
+                    googleMap.removeMarker(w.getMarker().convert());
+                }
+                for(Polyline line : r.getLines()) {
+                    googleMap.removeMapShape(line.convert());
+                }
+                
+                r.removeAllWaypoints();
+                
+                MAP_STORE.store();
+                
+                break;
+            }
+        }
     }
 
     @Override
@@ -723,6 +797,68 @@ public class MapPane extends BorderPane implements Map {
     }
     
     /**
+     * Called internally to configure size, position and style of the overlay.
+     */
+    private void configureOverlay() {
+        dimmer = new StackPane();
+        dimmer.setManaged(false);
+        dimmerMessage = new Label(DEFAULT_OVERLAY_MESSAGE);
+        dimmerMessage.setFont(Font.font(dimmerMessage.getFont().getFamily(), FontWeight.BOLD, 18));
+        dimmerMessage.setTextFill(Color.WHITE);
+        dimmer.getChildren().add(dimmerMessage);
+        dimmer.setStyle("-fx-background-color: rgba(0, 0, 0, 0.6);");
+        getChildren().add(dimmer);
+        
+        layoutBoundsProperty().addListener((v, o, n) -> {
+            Platform.runLater(() -> {
+                if(MapPane.this.getScene().getWindow() == null) return;
+                Point2D mapPoint = contentPane.localToParent(0, 0);
+                double topHeight = contentPane.getTop() == null ? 0 : contentPane.getTop().getLayoutBounds().getHeight();
+                dimmer.resizeRelocate(mapPoint.getX(), mapPoint.getY() + topHeight, 
+                    contentPane.getWidth(), contentPane.getHeight() - topHeight);
+            });
+        });
+    }
+    
+    /**
+     * Returns the flag which indicates whether the overlay is currently visible
+     * or not.
+     * @return  true if visible, false if not
+     */
+    public boolean isOverlayVisible() {
+        return overlayVisible;
+    }
+    
+    /**
+     * Sets the flag which indicates whether the overlay is currently visible
+     * or not.
+     * @param b     true if visible, false if not
+     */
+    public void setOverlayVisible(boolean b) {
+        dimmer.setVisible(overlayVisible = b);
+    }
+    
+    /**
+     * Sets the overlay message which is the message displayed when 
+     * {@link #setOverlayVisible(boolean)} is called with "true".
+     * @param message   the message to be displayed.
+     */
+    public void setOverlayMessage(String message) {
+        dimmerMessage.setText(message);
+    }
+    
+    /**
+     * Sets the string used to set the style of the overlay.
+     * 
+     * @param fxmlStyleString   Style String such as:<br> 
+     *                          <b>"-fx-background-color: rgba(0,0,0,0.6);
+     *                          </b></em>(the default)</em>"
+     */
+    public void setOverlayStyle(String fxmlStyleString) {
+        dimmer.setStyle(fxmlStyleString);
+    }
+    
+    /**
      * Returns this JavaFX {@link Node} 
      */
     @Override
@@ -763,16 +899,18 @@ public class MapPane extends BorderPane implements Map {
     }
     
     /**
-     * Returns the default {@link MapEventHandler}
+     * Returns the default {@link MapEventHandler}. This is the handler that
+     * converts clicks on the map to {@link Waypoint}s added.
+     * 
      * @return the default {@code MapEventHandler}
      */
     private MapEventHandler getDefaultMapEventHandler() {
         return (JSObject obj) -> {
-            if(isRouteSimMode) {
-                if(currentRoute == null) {
-                    currentRoute = new Route("temp");
-                    addRoute(currentRoute);
-                }
+            if(currentMode == Mode.ROUTE_ENTER) {
+//                if(currentRoute == null) {
+//                    currentRoute = new Route("temp (rename me)");
+//                    addRoute(currentRoute);
+//                }
                 
                 LatLong ll = new LatLong((JSObject) obj.getMember("latLng"));
                 

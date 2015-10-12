@@ -84,7 +84,7 @@ public class PersistentMap {
      * @return  the Route with the specified name
      */
     public Route getRoute(String name) {
-        return routes.stream().filter(r -> r.getName().equals(name)).findFirst().get();
+        return routes.stream().filter(r -> r.getName().equals(name)).findFirst().orElse(null);
     }
     
     /**

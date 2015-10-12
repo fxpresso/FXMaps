@@ -1,7 +1,6 @@
 package ai.cogmission.fxmaps.demo;
 
 import javafx.application.Application;
-import javafx.beans.value.ChangeListener;
 import javafx.scene.Scene;
 import javafx.scene.control.ToolBar;
 import javafx.stage.Stage;
@@ -11,6 +10,7 @@ import ai.cogmission.fxmaps.model.MapOptions;
 import ai.cogmission.fxmaps.model.MapType;
 import ai.cogmission.fxmaps.model.MarkerType;
 import ai.cogmission.fxmaps.model.PersistentMap;
+import ai.cogmission.fxmaps.model.Route;
 import ai.cogmission.fxmaps.ui.Map;
 
 /**
@@ -83,15 +83,6 @@ public class RefImpl extends Application {
         };
     }
     
-    public void deleteMap() {
-        PersistentMap pm = map.getMapStore().getMap(map.getMapStore().getSelectedMapName());
-        if(pm != null && pm.getRoutes() != null && pm.getRoutes().size() > 0) {
-            map.clearMap();
-            map.getMapStore().deleteMap(map.getMapStore().getSelectedMapName());
-            map.getMapStore().store();
-        }
-    }
-    
     public void clearMap() {
         PersistentMap pm = map.getMapStore().getMap(map.getMapStore().getSelectedMapName());
         if(pm != null && pm.getRoutes() != null && pm.getRoutes().size() > 0) {
@@ -99,6 +90,12 @@ public class RefImpl extends Application {
         }
     }
     
+    /**
+     * Called when the user hits the "Enter" key via the mapCombo.valueProperty;
+     * or when the user clicks the "Add" button.
+     * 
+     * @param mapName   the name of the map to create or select
+     */
     public void createOrSelectMap(String mapName) {
         map.clearMap();
         
@@ -118,31 +115,28 @@ public class RefImpl extends Application {
         // Display the selected map's routes
         PersistentMap pm = map.getMapStore().getMap(mapName);
         System.out.println("map " + map.getMapStore().getSelectedMapName() + " has " + pm.getRoutes().size() + " routes.");
-        if(pm.getRoutes().size() > 0) {
-            map.displayRoute(pm.getRoutes().get(0));
+        
+        map.setOverlayVisible(false);
+        
+        toolBar.mapSelected(pm);
+    }
+    
+    public void createOrSelectRoute(String routeName) {
+        if(routeName == null) {
+            // Analyze this later...
+            System.out.println("createOrSelectRoute(): null routeName");
+            return;
         }
-    }
-    
-    /**
-     * Returns the handler which responds to the map combo box selection.
-     * 
-     * @return  the map combo handler
-     */
-    public ChangeListener<String> getMapSelectionListener() {
-        return (v, o, n) -> {
-            createOrSelectMap(n);
-        };
-    }
-    
-    /**
-     * Returns the handler which responds to the route combo box selection.
-     * 
-     * @return  the map combo handler
-     */
-    public ChangeListener<String> getRouteSelectionListener() {
-        return (v, o, n) -> {
-            
-        };
+        
+        // Will add a new route only if one doesn't exist under name
+        Route newRoute = new Route(routeName);
+        map.addRoute(newRoute);
+        
+        // Set reference to the current route
+        map.setCurrentRoute(newRoute);
+        
+        // Select and display the route
+        toolBar.selectRoute(routeName);
     }
     
     /**

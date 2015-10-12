@@ -3,6 +3,8 @@ package ai.cogmission.fxmaps.demo;
 import java.io.File;
 import java.util.Collection;
 
+import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
@@ -19,6 +21,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import ai.cogmission.fxmaps.model.PersistentMap;
 import ai.cogmission.fxmaps.ui.Map;
+import ai.cogmission.fxmaps.ui.Map.Mode;
 import ai.cogmission.fxmaps.xml.GPXPersistentMap;
 import ai.cogmission.fxmaps.xml.GPXReader;
 import ai.cogmission.fxmaps.xml.GPXType;
@@ -47,8 +50,18 @@ public class RefImplToolBar extends ToolBar {
     private Flyout routeFlyout;
     private ToggleButton mapChooser;
     private ToggleButton routeChooser;
+    private CheckBox addWaypointBox;
+    
+    private static final String DEFAULT_ROUTE_NAME = "temp (change me)";
+    private ChangeListener<Flyout.Status> local;
     
     
+    /**
+     * Constructs a new {@code RefImplToolBar}
+     * 
+     * @param parent    the parent application
+     * @param map       the instance of {@link Map}
+     */
     public RefImplToolBar(RefImpl parent, Map map) {
         this.parent = parent;
         this.map = map;
@@ -64,8 +77,6 @@ public class RefImplToolBar extends ToolBar {
     public void initializeToolBar() {
         getItems().addAll(
             directionsBtn = new ToggleButton("Directions"),
-            new Separator(),
-            getGPXLoadControl(),
             new Separator(),
             mapFlyout = new Flyout(mapChooser = new ToggleButton("Create / Select Map"), getMapControl()),
             new Separator(),
@@ -96,6 +107,8 @@ public class RefImplToolBar extends ToolBar {
                 } catch(Exception e1) {
                     e1.printStackTrace();
                 }
+                
+                map.setOverlayVisible(false);
             }
         });
         
@@ -114,6 +127,8 @@ public class RefImplToolBar extends ToolBar {
                 mapFlyout.dismiss();
             }else{
                 mapFlyout.flyout();
+                mapCombo.getEditor().requestFocus();
+                mapCombo.getEditor().selectAll();
             }
         });
         
@@ -122,6 +137,8 @@ public class RefImplToolBar extends ToolBar {
                 routeFlyout.dismiss();
             }else{
                 routeFlyout.flyout();
+                routeCombo.getEditor().requestFocus();
+                routeCombo.getEditor().selectAll();
             }
         });
     }
@@ -132,8 +149,9 @@ public class RefImplToolBar extends ToolBar {
     public void initMapSelector() {
         mapCombo = new ComboBox<>();
         mapCombo.setEditable(true);
-        mapCombo.setPromptText("Type or select map name.");
-        mapCombo.valueProperty().addListener(parent.getMapSelectionListener());
+        mapCombo.setPromptText("Type map name...");
+        // Listen for "Enter" key presses
+        mapCombo.valueProperty().addListener(getMapSelectionListener());
     }
     
     /**
@@ -142,8 +160,8 @@ public class RefImplToolBar extends ToolBar {
     public void initRouteSelector() {
         routeCombo = new ComboBox<>();
         routeCombo.setEditable(true);
-        routeCombo.setPromptText("Type or select route name.");
-        routeCombo.valueProperty().addListener(parent.getMapSelectionListener());
+        routeCombo.setPromptText("Type route name...");
+        routeCombo.valueProperty().addListener(getRouteSelectionListener());
     }
     
     /**
@@ -154,18 +172,27 @@ public class RefImplToolBar extends ToolBar {
         GridPane gp = new GridPane();
         gp.setPadding(new Insets(5, 5, 5, 5));
         gp.setHgap(5);
+        gp.setVgap(5);
+        
+        Button gpxLoader = getGPXLoadControl();
+        gpxLoader.setPrefHeight(15);
         
         Label l = new Label("Select or enter map name:");
         l.setFont(Font.font(l.getFont().getFamily(), 12));
         l.setTextFill(Color.WHITE);
+        
         Button add = new Button("Add");
-        add.setOnAction(e -> parent.createOrSelectMap(mapCombo.getSelectionModel().getSelectedItem()));
+        add.setOnAction(e -> mapCombo.valueProperty().set(mapCombo.getEditor().getText()));
+        
         Button del = new Button("Clear map");
         del.setOnAction(e -> parent.clearMap());
-        gp.add(l, 0, 0, 2, 1);
-        gp.add(mapCombo, 0, 1, 2, 1);
-        gp.add(add, 2, 1);
-        gp.add(del, 3, 1);
+        
+        gp.add(gpxLoader, 0, 0, 2, 1);
+        gp.add(new Separator(), 0, 1, 3, 1);
+        gp.add(l, 0, 2, 2, 1);
+        gp.add(mapCombo, 0, 3, 3, 1);
+        gp.add(add, 3, 3);
+        gp.add(del, 4, 3);
         
         return gp;
     }
@@ -178,16 +205,17 @@ public class RefImplToolBar extends ToolBar {
         GridPane gp = new GridPane();
         gp.setPadding(new Insets(5, 5, 5, 5));
         gp.setHgap(5);
+        gp.setVgap(5);
         
         HBox rsMode = new HBox();
-        CheckBox cb = new CheckBox("Add Waypoint");
-        cb.setTextFill(Color.WHITE);
-        cb.setOnAction(e -> {
-            map.setRouteSimulationMode(cb.isSelected());
+        addWaypointBox = new CheckBox("Add Waypoint");
+        addWaypointBox.setTextFill(Color.WHITE);
+        addWaypointBox.setOnAction(e -> {
+            map.setMode(addWaypointBox.isSelected() ? Mode.ROUTE_ENTER : Mode.NORMAL);
         });
-        rsMode.getChildren().add(cb);
+        rsMode.getChildren().add(addWaypointBox);
         Label l = new Label("Select or enter route name:");
-        l.setFont(Font.font(l.getFont().getFamily(), 10));
+        l.setFont(Font.font(l.getFont().getFamily(), 12));
         l.setTextFill(Color.WHITE);
         Button add = new Button("Add");
         //add.setOnAction();
@@ -206,6 +234,37 @@ public class RefImplToolBar extends ToolBar {
         return gp;
     }
     
+    public void mapSelected(PersistentMap map) {
+        if(mapChooser.isSelected()) {
+            mapFlyout.getFlyoutStatusProperty().addListener(local = (v, o, n) -> {
+                
+                if(map.getRoutes().isEmpty() && n == Flyout.Status.COMPLETE) {
+                    
+                    if(!routeFlyout.flyoutShowing()) {
+                        mapFlyout.getFlyoutStatusProperty().removeListener(local);
+                        Platform.runLater(() -> {
+                            routeCombo.getEditor().setText(DEFAULT_ROUTE_NAME);
+                            routeCombo.getEditor().requestFocus();
+                            routeCombo.getEditor().selectAll();
+                        });
+                        
+                        routeChooser.fire();
+                    }
+                }else{
+                    routeCombo.getItems().clear();
+                    
+                    String[] sa = map.getRoutes().stream()
+                        .map(r -> r.getName())
+                        .filter(name -> !routeCombo.getItems().contains(name))
+                        .toArray(String[]::new);
+                    routeCombo.getItems().addAll(sa);
+                 }
+            });
+            
+            mapChooser.fire();            
+        }
+    }
+    
     public void addMaps(Collection<String> mapNames) {
         mapCombo.getItems().addAll(mapNames);
     }
@@ -221,6 +280,9 @@ public class RefImplToolBar extends ToolBar {
     }
     
     public void selectMap(String name) {
+        routeCombo.getSelectionModel().clearSelection();
+        routeCombo.getItems().clear();
+        
         mapCombo.getSelectionModel().select(name);
         
         // IMPORTANT: Point the MapStore to the desired map selection
@@ -230,4 +292,81 @@ public class RefImplToolBar extends ToolBar {
             e.printStackTrace();
         }
     }
+    
+    public void clearMapSelection() {
+        mapCombo.getSelectionModel().clearSelection();
+        map.setOverlayVisible(true);
+    }
+    
+    public void removeMapListing(String mapName) {
+        mapCombo.getItems().remove(mapName);
+    }
+    
+    /**
+     * Returns the handler which responds to the map combo box selection.
+     * 
+     * @return  the map combo handler
+     */
+    public ChangeListener<String> getMapSelectionListener() {
+        return (v, o, n) -> {
+            parent.createOrSelectMap(n);
+        };
+    }
+    
+    /**
+     * Adds the Route to the route combo in the toolbar
+     * @param routeName the name of the route to add
+     */
+    public void addRoute(String routeName) {
+        if(!containsRoute(routeName)) {
+            routeCombo.getItems().add(routeName);
+        }
+    }
+    
+    /**
+     * Returns a flag indicating whether the route exists in the combo model
+     * @param name  the name to check
+     * @return  true if it exists, false if not
+     */
+    public boolean containsRoute(String name) {
+        return routeCombo.getItems().contains(name);
+    }
+    
+    /**
+     * Selects the route specified by name and changes the mode to 
+     * {@link Map.Mode#ROUTE_ENTER}; then displays the route.
+     * 
+     * @param name  the name of the route to set as "currentRoute"
+     */
+    public void selectRoute(String name) {
+        routeCombo.getSelectionModel().select(name);
+        
+        // Close the route chooser
+        if(routeChooser.isSelected()) {
+            routeChooser.fire();
+        }
+        
+        // Set the route enter mode
+        map.setMode(Map.Mode.ROUTE_ENTER);
+        if(!addWaypointBox.isSelected()) {
+            addWaypointBox.fire();
+        }
+        
+        // Display the route
+        PersistentMap pm = map.getMapStore().getMap(map.getMapStore().getSelectedMapName());
+        map.displayRoute(pm.getRoute(name));
+    }
+    
+    /**
+     * Returns the handler which responds to the route combo box selection.
+     * 
+     * @return  the map combo handler
+     */
+    public ChangeListener<String> getRouteSelectionListener() {
+        return (v, o, n) -> {
+            parent.createOrSelectRoute(n);
+        };
+    }
+    
+    
 }

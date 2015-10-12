@@ -84,6 +84,7 @@ public class Route {
      */
     public void removeAllWaypoints() {
         observableDelegate.clear();
+        lines.clear();
     }
     
     /**

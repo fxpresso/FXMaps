@@ -34,6 +34,8 @@ import com.lynden.gmapsfx.MapComponentInitializedListener;
  * @see MapPane
  */
 public interface Map extends MapComponentInitializedListener {
+    public enum Mode { ROUTE_ENTER, NORMAL };
+    
     public static final double DEFAULT_WIDTH = 1000;
     public static final double DEFAULT_HEIGHT = 780;
     
@@ -65,6 +67,11 @@ public interface Map extends MapComponentInitializedListener {
         return (T)map;
     }
     
+    /**
+     * Adds a new map with the specified name.
+     * 
+     * @param mapName   the name of the new map
+     */
     public default void addMap(String mapName) {
         getMapStore().addMap(mapName);
     }
@@ -102,8 +109,40 @@ public interface Map extends MapComponentInitializedListener {
      */
     public void setMapOptions(MapOptions mapOptions);
     /**
-     * Returns the MapPane Node
-     * @return
+     * Returns the flag which indicates whether the overlay is currently visible
+     * or not.
+     * @return  true if visible, false if not
+     */
+    public boolean isOverlayVisible();
+    /**
+     * Sets the flag which indicates whether the overlay is currently visible
+     * or not.
+     * @param b     true if visible, false if not
+     */
+    public void setOverlayVisible(boolean b);
+    /**
+     * Sets the overlay message which is the message displayed when 
+     * {@link #setOverlayVisible(boolean)} is called with "true".
+     * @param message   the message to be displayed.
+     */
+    public void setOverlayMessage(String message);
+    /**
+     * Sets the string used to set the style of the overlay.
+     * 
+     * @param fxmlStyleString   Style String such as:<br> 
+     *                          <b>"-fx-background-color: rgba(0,0,0,0.6);
+     *                          </b></em>(the default)</em>"
+     */
+    public void setOverlayStyle(String fxmlStyleString);
+    /**
+     * Sets the map mode to one of {@link Mode}
+     * @param mode  the mode to set
+     */
+    public void setMode(Mode mode);
+    /**
+     * Returns the MapPane which is added to your client code.
+     * 
+     * @return  the {@link MapPane}
      */
     public MapPane getNode();
     /**
@@ -111,15 +150,6 @@ public interface Map extends MapComponentInitializedListener {
      * @param n a toolbar
      */
     public void addToolBar(Node n);
-    /**
-     * Sets the flag indicating which mode the {@code Map} is currently in.
-     * "Regular mode" is the mode where routes are loaded from external 
-     * sources, and "Route Simulation Mode" is where the user can click on 
-     * the map and create new routes.
-     * 
-     * @param b     true if in simulation mode, false if not
-     */
-    public void setRouteSimulationMode(boolean b);
     /**
      * Centers this {@code Map} on the user's current city location.
      */
@@ -248,7 +278,6 @@ public interface Map extends MapComponentInitializedListener {
         Route r = new Route(name);
         return r;
     }
-    
     /**
      * Adds a {@link Route} to this {@code Map}
      * @param route     the route to add
@@ -297,9 +326,15 @@ public interface Map extends MapComponentInitializedListener {
      */
     public void refresh();
     /**
-     * Removes all {@link Route}s from this {@code Map}
+     * Removes all {@link Route}s from the currently selected {@code Map}
      */
     public void clearMap();
+    /**
+     * Deletes the currently selected map and its persistent storage.
+     * 
+     * @param  mapName  the name of the map to delete
+     */
+    public void deleteMap(String mapName);
     /**
      * Returns a Route consisting of arbitrary {@link Waypoint}s into a
      * {@link DirectionsRoute} which adheres to Streets and Highways. In
@@ -331,11 +366,10 @@ public interface Map extends MapComponentInitializedListener {
     /**
      * Removes the default handler which:
      * <ol>
-     *     <li>Checks to see if "routeSimulationMode" is true (see {@link #setRouteSimulationMode(boolean)})
-     *     <li> if routeSimulationMode is true, and the user left-clicked the map, a Waypoint will be added
-     *     to either a route named "temp" or if {@link #setCurrentRoute} has been called with a valid Route, 
-     *     it will be added to that current {@link Route}
-     *     <li> if routeSimulationMode is false, nothing happens.
+     *     <li>Checks to see if the current {@link Mode} is equal to {@link Mode#ROUTE_ENTER}
+     *     <li> if {@link Mode} is equal to {@link Mode#ROUTE_ENTER}, and the user left-clicked the map, a Waypoint will be added
+     *     to the current route ({@link #setCurrentRoute})
+     *     <li> if {@link Mode} is <em>not</em> equal to {@link Mode#ROUTE_ENTER}, nothing happens.
      * </ol>
      * 
      * <em>WARNING: To guarantee consistency, this MUST be called before {@link Map#initialize()} is called or 
