@@ -24,6 +24,13 @@ ai.cogmission.fxmaps.RefImpl
 I will keep its status up to date until I reach the point where I can start work on the project that uses this library (see [Nostromo](https://github.com/cogmission/Nostromo))
 
 ***
+**(2015-10-12)**
+* Includes use of new Flyout 
+* ...above used for new Map & Route editors
+* Border decoration for Route editor mode
+* New Workflows added for new Maps; and saved map loading...
+![FXMaps Demo](http://metaware.us/images/refimpl.png)
+
 **(2015-10-4)**
 * Now load GPX Files!
 * New GPX object model for loading GPX files
