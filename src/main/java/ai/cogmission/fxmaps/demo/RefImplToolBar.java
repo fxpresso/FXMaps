@@ -19,7 +19,9 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
+import ai.cogmission.fxmaps.model.MarkerType;
 import ai.cogmission.fxmaps.model.PersistentMap;
+import ai.cogmission.fxmaps.model.Route;
 import ai.cogmission.fxmaps.ui.Map;
 import ai.cogmission.fxmaps.ui.Map.Mode;
 import ai.cogmission.fxmaps.xml.GPXPersistentMap;
@@ -123,6 +125,15 @@ public class RefImplToolBar extends ToolBar {
         directionsBtn.setSelected(true);
         
         mapChooser.setOnAction(e -> {
+            // Protect against clicks during animation and button getting out of sync
+            if(mapChooser.isSelected() && mapFlyout.getFlyoutStatusProperty().get() == Flyout.Status.RUNNING) {
+                mapChooser.setSelected(false);
+                return;
+            }else if(!mapChooser.isSelected() && mapFlyout.getFlyoutStatusProperty().get() == Flyout.Status.RUNNING) {
+                mapChooser.setSelected(true);
+                return;
+            }
+            
             if(mapFlyout.flyoutShowing()) {
                 mapFlyout.dismiss();
             }else{
@@ -133,6 +144,15 @@ public class RefImplToolBar extends ToolBar {
         });
         
         routeChooser.setOnAction(e -> {
+            // Protect against clicks during animation and button getting out of sync
+            if(routeChooser.isSelected() && routeFlyout.getFlyoutStatusProperty().get() == Flyout.Status.RUNNING) {
+                routeChooser.setSelected(false);
+                return;
+            }else if(!routeChooser.isSelected() && routeFlyout.getFlyoutStatusProperty().get() == Flyout.Status.RUNNING) {
+                routeChooser.setSelected(true);
+                return;
+            }
+            
             if(routeFlyout.flyoutShowing()) {
                 routeFlyout.dismiss();
             }else{
@@ -354,7 +374,13 @@ public class RefImplToolBar extends ToolBar {
         
         // Display the route
         PersistentMap pm = map.getMapStore().getMap(map.getMapStore().getSelectedMapName());
-        map.displayRoute(pm.getRoute(name));
+        Route r = pm.getRoute(name);
+        map.displayRoute(r);
+        
+        // Set the MarkerType index to the selected route's last marker letter
+        if(r.getDestination() != null) {
+            MarkerType.reset(pm.getRoute(name));
+        }
     }
     
     /**

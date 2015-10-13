@@ -133,7 +133,7 @@ public class RefImpl extends Application {
         map.addRoute(newRoute);
         
         // Set reference to the current route
-        map.setCurrentRoute(newRoute);
+        map.setCurrentRoute(map.getRoute(routeName));
         
         // Select and display the route
         toolBar.selectRoute(routeName);

@@ -907,11 +907,6 @@ public class MapPane extends StackPane implements Map {
     private MapEventHandler getDefaultMapEventHandler() {
         return (JSObject obj) -> {
             if(currentMode == Mode.ROUTE_ENTER) {
-//                if(currentRoute == null) {
-//                    currentRoute = new Route("temp (rename me)");
-//                    addRoute(currentRoute);
-//                }
-                
                 LatLong ll = new LatLong((JSObject) obj.getMember("latLng"));
                 
                 Waypoint waypoint = createWaypoint(new LatLon(ll.getLatitude(), ll.getLongitude()));
