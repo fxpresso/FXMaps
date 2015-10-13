@@ -202,17 +202,50 @@ public class RefImplToolBar extends ToolBar {
         l.setTextFill(Color.WHITE);
         
         Button add = new Button("Add");
+        add.disableProperty().set(true);
         add.setOnAction(e -> mapCombo.valueProperty().set(mapCombo.getEditor().getText()));
         
-        Button del = new Button("Clear map");
-        del.setOnAction(e -> parent.clearMap());
+        Button clr = new Button("Clear map");
+        clr.disableProperty().set(true);
+        clr.setOnAction(e -> map.clearMap());
+        
+        Button del = new Button("Delete map");
+        del.disableProperty().set(true);
+        del.setOnAction(e -> {
+            map.clearMap();
+            map.deleteMap(mapCombo.getEditor().getText());
+            mapCombo.getItems().remove(mapCombo.getEditor().getText());
+            mapCombo.getSelectionModel().clearSelection();
+            mapCombo.getEditor().clear();
+            map.setMode(Mode.NORMAL);
+            mapChooser.fire();
+            map.setOverlayVisible(true);
+        });
+        
+        mapCombo.getEditor().textProperty().addListener((v, o, n) -> {
+            if(mapCombo.getEditor().getText() != null && mapCombo.getEditor().getText().length() > 0) {
+                add.disableProperty().set(false);
+                if(map.getMapStore().getMap(mapCombo.getEditor().getText()) != null) {
+                    clr.disableProperty().set(false);
+                    del.disableProperty().set(false);
+                }else{
+                    clr.disableProperty().set(true);
+                    del.disableProperty().set(true);
+                }
+            }else{
+                add.disableProperty().set(true);
+                clr.disableProperty().set(true);
+                del.disableProperty().set(true);
+            }
+        });
         
         gp.add(gpxLoader, 0, 0, 2, 1);
-        gp.add(new Separator(), 0, 1, 3, 1);
+        gp.add(new Separator(), 0, 1, 2, 1);
         gp.add(l, 0, 2, 2, 1);
         gp.add(mapCombo, 0, 3, 3, 1);
         gp.add(add, 3, 3);
-        gp.add(del, 4, 3);
+        gp.add(clr, 4, 3);
+        gp.add(del, 5, 3);
         
         return gp;
     }
@@ -228,10 +261,10 @@ public class RefImplToolBar extends ToolBar {
         gp.setVgap(5);
         
         HBox rsMode = new HBox();
-        addWaypointBox = new CheckBox("Add Waypoint");
+        addWaypointBox = new CheckBox("Add Waypoints");
         addWaypointBox.setTextFill(Color.WHITE);
         addWaypointBox.setOnAction(e -> {
-            map.setMode(addWaypointBox.isSelected() ? Mode.ROUTE_ENTER : Mode.NORMAL);
+            map.setMode(addWaypointBox.isSelected() ? Mode.ADD_WAYPOINTS : Mode.NORMAL);
         });
         rsMode.getChildren().add(addWaypointBox);
         Label l = new Label("Select or enter route name:");
@@ -254,11 +287,11 @@ public class RefImplToolBar extends ToolBar {
         return gp;
     }
     
-    public void mapSelected(PersistentMap map) {
+    public void mapSelected(PersistentMap persistentMap) {
         if(mapChooser.isSelected()) {
             mapFlyout.getFlyoutStatusProperty().addListener(local = (v, o, n) -> {
                 
-                if(map.getRoutes().isEmpty() && n == Flyout.Status.COMPLETE) {
+                if(persistentMap.getRoutes().isEmpty() && n == Flyout.Status.COMPLETE) {
                     
                     if(!routeFlyout.flyoutShowing()) {
                         mapFlyout.getFlyoutStatusProperty().removeListener(local);
@@ -270,19 +303,28 @@ public class RefImplToolBar extends ToolBar {
                         
                         routeChooser.fire();
                     }
-                }else{
+                    
+                    addWaypointBox.setSelected(true);
+                    map.setMode(Mode.ADD_WAYPOINTS);
+                }else if(n == Flyout.Status.COMPLETE){
+                    mapFlyout.getFlyoutStatusProperty().removeListener(local);
                     routeCombo.getItems().clear();
                     
-                    String[] sa = map.getRoutes().stream()
+                    String[] sa = persistentMap.getRoutes().stream()
                         .map(r -> r.getName())
                         .filter(name -> !routeCombo.getItems().contains(name))
                         .toArray(String[]::new);
                     routeCombo.getItems().addAll(sa);
+                    routeCombo.getSelectionModel().select(0);
+                    
+                    map.refresh();
                  }
             });
             
             mapChooser.fire();            
         }
+        
+        map.refresh();
     }
     
     public void addMaps(Collection<String> mapNames) {
@@ -329,6 +371,7 @@ public class RefImplToolBar extends ToolBar {
      */
     public ChangeListener<String> getMapSelectionListener() {
         return (v, o, n) -> {
+            if(n == null) return;
             parent.createOrSelectMap(n);
         };
     }
@@ -354,7 +397,7 @@ public class RefImplToolBar extends ToolBar {
     
     /**
      * Selects the route specified by name and changes the mode to 
-     * {@link Map.Mode#ROUTE_ENTER}; then displays the route.
+     * {@link Map.Mode#ADD_WAYPOINTS}; then displays the route.
      * 
      * @param name  the name of the route to set as "currentRoute"
      */
@@ -364,12 +407,6 @@ public class RefImplToolBar extends ToolBar {
         // Close the route chooser
         if(routeChooser.isSelected()) {
             routeChooser.fire();
-        }
-        
-        // Set the route enter mode
-        map.setMode(Map.Mode.ROUTE_ENTER);
-        if(!addWaypointBox.isSelected()) {
-            addWaypointBox.fire();
         }
         
         // Display the route
@@ -390,6 +427,7 @@ public class RefImplToolBar extends ToolBar {
      */
     public ChangeListener<String> getRouteSelectionListener() {
         return (v, o, n) -> {
+            if(n == null) return;
             parent.createOrSelectRoute(n);
         };
     }

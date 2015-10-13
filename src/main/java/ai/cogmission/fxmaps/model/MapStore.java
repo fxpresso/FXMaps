@@ -48,6 +48,10 @@ public class MapStore {
      * @param newMapName    the name for the new map.
      */
     public void addMap(String newMapName) {
+        if(newMapName == null) {
+            return;
+        }
+        
         if(maps.get(newMapName) == null) {
             maps.put(newMapName, new PersistentMap(selectedMap = newMapName));
         }
@@ -105,6 +109,10 @@ public class MapStore {
      * Called prior to serialization to load the serializable data structure.
      */
     public void preSerialize() {
+        if(selectedMap == null || maps.get(selectedMap) == null) {
+            return;
+        }
+        
         for(Route r : maps.get(selectedMap).getRoutes()) {
             r.preSerialize();
         }
