@@ -77,6 +77,21 @@ public enum MarkerType {
         }
     }
     
+    /**
+     * Resets this {@code MarkerType}'s character index to the last one
+     * in the specified {@link Route} so that new waypoints can continue
+     * where the route left off.
+     * 
+     * @param r     the Route we're resetting to
+     */
+    public static void reset(Route r) {
+        Waypoint dest = r.getDestination();
+        String desc = dest.getMarker().getMarkerOptions().getIcon();
+        MarkerType color = valueOf(desc.substring(desc.lastIndexOf("/") + 1, desc.indexOf("_")).toUpperCase());
+        Character chr = desc.substring(desc.lastIndexOf(".") - 1, desc.lastIndexOf(".")).toUpperCase().charAt(0);
+        cursors.put(color, chr);
+    }
+    
     public String iconPath() {
         if(chr() == 'A' - 1) next();
         

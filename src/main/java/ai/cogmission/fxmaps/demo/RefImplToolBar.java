@@ -19,7 +19,9 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
+import ai.cogmission.fxmaps.model.MarkerType;
 import ai.cogmission.fxmaps.model.PersistentMap;
+import ai.cogmission.fxmaps.model.Route;
 import ai.cogmission.fxmaps.ui.Map;
 import ai.cogmission.fxmaps.ui.Map.Mode;
 import ai.cogmission.fxmaps.xml.GPXPersistentMap;
@@ -354,7 +356,13 @@ public class RefImplToolBar extends ToolBar {
         
         // Display the route
         PersistentMap pm = map.getMapStore().getMap(map.getMapStore().getSelectedMapName());
-        map.displayRoute(pm.getRoute(name));
+        Route r = pm.getRoute(name);
+        map.displayRoute(r);
+        
+        // Set the MarkerType index to the selected route's last marker letter
+        if(r.getDestination() != null) {
+            MarkerType.reset(pm.getRoute(name));
+        }
     }
     
     /**
