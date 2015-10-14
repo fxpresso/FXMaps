@@ -2,6 +2,8 @@ package ai.cogmission.fxmaps.demo;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
@@ -11,6 +13,7 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
+import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
 import javafx.scene.layout.GridPane;
@@ -19,6 +22,9 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
+
+import org.controlsfx.control.CheckComboBox;
+
 import ai.cogmission.fxmaps.model.MarkerType;
 import ai.cogmission.fxmaps.model.PersistentMap;
 import ai.cogmission.fxmaps.model.Route;
@@ -47,12 +53,13 @@ public class RefImplToolBar extends ToolBar {
     private ToggleButton directionsBtn;
     
     private ComboBox<String> mapCombo;
-    private ComboBox<String> routeCombo;
+    private CheckComboBox<String> routeCombo;
     private Flyout mapFlyout;
     private Flyout routeFlyout;
     private ToggleButton mapChooser;
     private ToggleButton routeChooser;
     private CheckBox addWaypointBox;
+    private TextField newRouteField;
     
     private static final String DEFAULT_ROUTE_NAME = "temp (change me)";
     private ChangeListener<Flyout.Status> local;
@@ -157,8 +164,8 @@ public class RefImplToolBar extends ToolBar {
                 routeFlyout.dismiss();
             }else{
                 routeFlyout.flyout();
-                routeCombo.getEditor().requestFocus();
-                routeCombo.getEditor().selectAll();
+//                routeCombo.getEditor().requestFocus();
+//                routeCombo.getEditor().selectAll();
             }
         });
     }
@@ -178,10 +185,10 @@ public class RefImplToolBar extends ToolBar {
      * Initializes the control for choosing/creating maps
      */
     public void initRouteSelector() {
-        routeCombo = new ComboBox<>();
-        routeCombo.setEditable(true);
-        routeCombo.setPromptText("Type route name...");
-        routeCombo.valueProperty().addListener(getRouteSelectionListener());
+        routeCombo = new CheckComboBox<>();
+        //routeCombo.setEditable(true);
+        //routeCombo.setPromptText("Type route name...");
+        //routeCombo.valueProperty().addListener(getRouteSelectionListener());
     }
     
     /**
@@ -260,6 +267,23 @@ public class RefImplToolBar extends ToolBar {
         gp.setHgap(5);
         gp.setVgap(5);
         
+        newRouteField = new TextField();
+        newRouteField.setDisable(true);
+        newRouteField.setOnAction(e -> {
+            newRouteField.setDisable(true);
+            String text = newRouteField.getText();
+            newRouteField.clear();
+            if(routeCombo.getItems().contains(text)) return;
+            routeCombo.getItems().add(text);
+            map.addRoute(new Route(text));
+        });
+        
+        Button addNew = new Button("New");
+        addNew.setOnAction(e -> {
+            newRouteField.setDisable(false);
+            newRouteField.requestFocus();
+        });
+        
         HBox rsMode = new HBox();
         addWaypointBox = new CheckBox("Add Waypoints");
         addWaypointBox.setTextFill(Color.WHITE);
@@ -271,18 +295,32 @@ public class RefImplToolBar extends ToolBar {
         l.setFont(Font.font(l.getFont().getFamily(), 12));
         l.setTextFill(Color.WHITE);
         Button add = new Button("Add");
-        //add.setOnAction();
+        add.setOnAction(e -> {
+            map.eraseMap();
+            List<String> items = routeCombo.getCheckModel().getCheckedItems();
+            List<Route> routes = null;
+            PersistentMap selectedMap = map.getMapStore().getMap(map.getMapStore().getSelectedMapName());
+            if(items != null && items.size() > 0) {
+                routes = items.stream().map(s -> selectedMap.getRoute(s)).collect(Collectors.toList());
+            }else{
+                return;
+            }
+            map.displayRoutes(routes);
+        });
         Button clr = new Button("Clear route");
-        clr.setOnAction(e -> map.clearRoute(map.getRoute(routeCombo.getSelectionModel().getSelectedItem())));
+        //clr.setOnAction(e -> map.clearRoute(map.getRoute(routeCombo.getSelectionModel().getSelectedItem())));
         Button del = new Button("Delete route");
-        del.setOnAction(e -> map.removeRoute(map.getRoute(routeCombo.getSelectionModel().getSelectedItem())));
+        //del.setOnAction(e -> map.removeRoute(map.getRoute(routeCombo.getSelectionModel().getSelectedItem())));
         
         gp.add(l, 0, 0, 2, 1);
+        gp.add(newRouteField, 0, 1, 2, 1);
+        gp.add(addNew, 2, 1, 1, 1);
+        gp.add(new Separator(), 0, 2, 5, 1);
         gp.add(rsMode, 2, 0, 2, 1);
-        gp.add(routeCombo, 0, 1, 2, 1);
-        gp.add(add, 2, 1);
-        gp.add(clr, 3, 1);
-        gp.add(del, 4, 1);
+        gp.add(routeCombo, 0, 3, 2, 1);
+        gp.add(add, 2, 3);
+        gp.add(clr, 3, 3);
+        gp.add(del, 4, 3);
         
         return gp;
     }
@@ -296,9 +334,9 @@ public class RefImplToolBar extends ToolBar {
                     if(!routeFlyout.flyoutShowing()) {
                         mapFlyout.getFlyoutStatusProperty().removeListener(local);
                         Platform.runLater(() -> {
-                            routeCombo.getEditor().setText(DEFAULT_ROUTE_NAME);
-                            routeCombo.getEditor().requestFocus();
-                            routeCombo.getEditor().selectAll();
+                            newRouteField.setText(DEFAULT_ROUTE_NAME);
+                            newRouteField.requestFocus();
+                            newRouteField.selectAll();
                         });
                         
                         routeChooser.fire();
@@ -315,7 +353,7 @@ public class RefImplToolBar extends ToolBar {
                         .filter(name -> !routeCombo.getItems().contains(name))
                         .toArray(String[]::new);
                     routeCombo.getItems().addAll(sa);
-                    routeCombo.getSelectionModel().select(0);
+                    routeCombo.getCheckModel().check(0);
                     
                     map.refresh();
                  }
@@ -342,7 +380,7 @@ public class RefImplToolBar extends ToolBar {
     }
     
     public void selectMap(String name) {
-        routeCombo.getSelectionModel().clearSelection();
+        routeCombo.getCheckModel().clearChecks();
         routeCombo.getItems().clear();
         
         mapCombo.getSelectionModel().select(name);
@@ -402,7 +440,7 @@ public class RefImplToolBar extends ToolBar {
      * @param name  the name of the route to set as "currentRoute"
      */
     public void selectRoute(String name) {
-        routeCombo.getSelectionModel().select(name);
+        routeCombo.getCheckModel().check(name);
         
         // Close the route chooser
         if(routeChooser.isSelected()) {
