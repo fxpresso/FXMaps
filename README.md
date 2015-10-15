@@ -27,6 +27,7 @@ I will keep its status up to date until I reach the point where I can start work
 **(2015-10-15)**
 * Added ability to display all or subset of routes
 * Added CheckedComboBox in route chooser
+* Added ability to add new Routes to selection 
 ![FXMaps Demo](http://metaware.us/images/screen.png)
 
 **(2015-10-12)**
