@@ -22,6 +22,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
+import javafx.stage.Window;
 
 import org.controlsfx.control.CheckComboBox;
 
@@ -186,6 +187,14 @@ public class RefImplToolBar extends ToolBar {
      */
     public void initRouteSelector() {
         routeCombo = new CheckComboBox<>();
+        // Make sure window resizes with combo box size changes due to display additions
+        routeCombo.layoutBoundsProperty().addListener((v, o, n) -> {
+            Window w = routeFlyout.getFlyoutContainer().getScene().getWindow();
+            if(w != null) {
+                w.setWidth(w.getWidth() + (n.getWidth() - o.getWidth()));
+            }
+        });
+        
         //routeCombo.setEditable(true);
         //routeCombo.setPromptText("Type route name...");
         //routeCombo.valueProperty().addListener(getRouteSelectionListener());
@@ -441,11 +450,6 @@ public class RefImplToolBar extends ToolBar {
      */
     public void selectRoute(String name) {
         routeCombo.getCheckModel().check(name);
-        
-        // Close the route chooser
-        if(routeChooser.isSelected()) {
-            routeChooser.fire();
-        }
         
         // Display the route
         PersistentMap pm = map.getMapStore().getMap(map.getMapStore().getSelectedMapName());
