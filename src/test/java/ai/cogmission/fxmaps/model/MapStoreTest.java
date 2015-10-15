@@ -95,7 +95,7 @@ public class MapStoreTest {
             w2 = new Waypoint(ll2, new Marker(opts2));
             r2.addWaypoint(w2);
             
-            MapStore store = new MapStore();
+            MapStore store = new MapStore(System.getProperty("user.home").concat("/testMapStore.json"));
             store.addMap("test");
             store.selectMap("test");
             store.getMap(store.getSelectedMapName()).addRoute(r);
@@ -108,7 +108,7 @@ public class MapStoreTest {
             
             //////////// Load /////////////
             
-            MapStore loadedStore = new MapStore().load();
+            MapStore loadedStore = MapStore.load(System.getProperty("user.home").concat("/testMapStore.json"));
             loadedStore.selectMap("test");
             java.util.Map<String, PersistentMap> maps = loadedStore.getMaps();
             assertEquals(1, maps.size());
@@ -235,7 +235,7 @@ public class MapStoreTest {
                 .strokeColor("red");
             r2.addLine(new Polyline(lineOpts));
             
-            MapStore store = new MapStore();
+            MapStore store = new MapStore(System.getProperty("user.home").concat("/testMapStore.json"));
             store.addMap("test");
             store.selectMap("test");
             store.getMap(store.getSelectedMapName()).addRoute(r);
@@ -248,7 +248,7 @@ public class MapStoreTest {
             
             //////////// Load /////////////
             
-            MapStore loadedStore = new MapStore().load();
+            MapStore loadedStore = MapStore.load(System.getProperty("user.home").concat("/testMapStore.json"));
             
             assertEquals(2, loadedStore.getMap(loadedStore.getSelectedMapName()).getRoutes().size());
             Route r1 = loadedStore.getMap(loadedStore.getSelectedMapName()).getRoutes().get(0);
