@@ -178,6 +178,8 @@ public class MapPane extends StackPane implements Map {
     
     @Override
     public void addMap(String mapName) {
+        if(mapName == null) return;
+        
         MAP_STORE.addMap(mapName);
         MAP_STORE.getMap(mapName).setMapOptions(DEFAULT_MAP_OPTIONS);
     }
@@ -217,7 +219,7 @@ public class MapPane extends StackPane implements Map {
     public void setMode(Mode mode) {
         currentMode = mode;
         
-        if(mode == Mode.ROUTE_ENTER) {
+        if(mode == Mode.ADD_WAYPOINTS) {
             setBorder(new Border(new BorderStroke(Color.GREEN, BorderStrokeStyle.SOLID, null, new BorderWidths(5))));
         }else{
             setBorder(null);
@@ -597,12 +599,27 @@ public class MapPane extends StackPane implements Map {
      */
     @Override
     public void clearRoute(Route route) {
+        eraseRoute(route);
+        
+        route.removeAllWaypoints();
+        
+        MAP_STORE.store();
+    }
+    
+    /**
+     * Non-destructive clearing of all map objects. The {@code Map}
+     * and all its {@link Route}s will still contain their content,
+     * but the display will be cleared.
+     * 
+     * @param   route   the {@link Route} to erase
+     */
+    public void eraseRoute(Route route) {
         for(Waypoint w : route.getWaypoints()) {
             googleMap.removeMarker(w.getMarker().convert());
         }
         for(Polyline line : route.getLines()) {
             googleMap.removeMapShape(line.convert());
-        }
+        } 
     }
     
     /**
@@ -691,12 +708,20 @@ public class MapPane extends StackPane implements Map {
      */
     public void clearMap(String mapName) {
         for(Route r : MAP_STORE.getMap(MAP_STORE.getSelectedMapName()).getRoutes()) {
-            for(Waypoint w : r.getWaypoints()) {
-                googleMap.removeMarker(w.getMarker().convert());
-            }
-            for(Polyline line : r.getLines()) {
-                googleMap.removeMapShape(line.convert());
-            }
+            clearRoute(r);
+        }
+    }
+    
+    /**
+     * Non-destructively erases all displayed content from the map
+     * display
+     */
+    public void eraseMap() {
+        if(MAP_STORE.getMap(MAP_STORE.getSelectedMapName()) == null) {
+            return;
+        }
+        for(Route r : MAP_STORE.getMap(MAP_STORE.getSelectedMapName()).getRoutes()) {
+            eraseRoute(r);
         }
     }
     
@@ -719,17 +744,7 @@ public class MapPane extends StackPane implements Map {
     public void clearRoute(String name) {
         for(Route r : MAP_STORE.getMap(MAP_STORE.getSelectedMapName()).getRoutes()) {
             if(r.getName().equals(name)) {
-                for(Waypoint w : r.getWaypoints()) {
-                    googleMap.removeMarker(w.getMarker().convert());
-                }
-                for(Polyline line : r.getLines()) {
-                    googleMap.removeMapShape(line.convert());
-                }
-                
-                r.removeAllWaypoints();
-                
-                MAP_STORE.store();
-                
+                clearRoute(r);                
                 break;
             }
         }
@@ -906,7 +921,7 @@ public class MapPane extends StackPane implements Map {
      */
     private MapEventHandler getDefaultMapEventHandler() {
         return (JSObject obj) -> {
-            if(currentMode == Mode.ROUTE_ENTER) {
+            if(currentMode == Mode.ADD_WAYPOINTS) {
                 LatLong ll = new LatLong((JSObject) obj.getMember("latLng"));
                 
                 Waypoint waypoint = createWaypoint(new LatLon(ll.getLatitude(), ll.getLongitude()));

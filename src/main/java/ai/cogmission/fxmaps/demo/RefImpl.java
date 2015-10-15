@@ -83,13 +83,6 @@ public class RefImpl extends Application {
         };
     }
     
-    public void clearMap() {
-        PersistentMap pm = map.getMapStore().getMap(map.getMapStore().getSelectedMapName());
-        if(pm != null && pm.getRoutes() != null && pm.getRoutes().size() > 0) {
-            map.clearMap();
-        }
-    }
-    
     /**
      * Called when the user hits the "Enter" key via the mapCombo.valueProperty;
      * or when the user clicks the "Add" button.
@@ -97,7 +90,9 @@ public class RefImpl extends Application {
      * @param mapName   the name of the map to create or select
      */
     public void createOrSelectMap(String mapName) {
-        map.clearMap();
+        if(mapName == null) return;
+        
+        map.eraseMap();
         
         // Reset the marker letter sequence in preparation for
         // newly added waypoints

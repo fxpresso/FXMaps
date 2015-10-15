@@ -34,7 +34,7 @@ import com.lynden.gmapsfx.MapComponentInitializedListener;
  * @see MapPane
  */
 public interface Map extends MapComponentInitializedListener {
-    public enum Mode { ROUTE_ENTER, NORMAL };
+    public enum Mode { ADD_WAYPOINTS, NORMAL };
     
     public static final double DEFAULT_WIDTH = 1000;
     public static final double DEFAULT_HEIGHT = 780;
@@ -330,11 +330,24 @@ public interface Map extends MapComponentInitializedListener {
      */
     public void clearMap();
     /**
+     * Non-destructive clearing of all map objects. The {@code Map}
+     * and all its {@link Route}s will still contain their content,
+     * but the display will be cleared.
+     * 
+     * @param   route   the {@link Route} to erase
+     */
+    public void eraseRoute(Route route);
+    /**
      * Deletes the currently selected map and its persistent storage.
      * 
      * @param  mapName  the name of the map to delete
      */
     public void deleteMap(String mapName);
+    /**
+     * Non-destructively erases all displayed content from the map
+     * display
+     */
+    public void eraseMap();
     /**
      * Returns a Route consisting of arbitrary {@link Waypoint}s into a
      * {@link DirectionsRoute} which adheres to Streets and Highways. In
@@ -366,10 +379,10 @@ public interface Map extends MapComponentInitializedListener {
     /**
      * Removes the default handler which:
      * <ol>
-     *     <li>Checks to see if the current {@link Mode} is equal to {@link Mode#ROUTE_ENTER}
-     *     <li> if {@link Mode} is equal to {@link Mode#ROUTE_ENTER}, and the user left-clicked the map, a Waypoint will be added
+     *     <li>Checks to see if the current {@link Mode} is equal to {@link Mode#ADD_WAYPOINTS}
+     *     <li> if {@link Mode} is equal to {@link Mode#ADD_WAYPOINTS}, and the user left-clicked the map, a Waypoint will be added
      *     to the current route ({@link #setCurrentRoute})
-     *     <li> if {@link Mode} is <em>not</em> equal to {@link Mode#ROUTE_ENTER}, nothing happens.
+     *     <li> if {@link Mode} is <em>not</em> equal to {@link Mode#ADD_WAYPOINTS}, nothing happens.
      * </ol>
      * 
      * <em>WARNING: To guarantee consistency, this MUST be called before {@link Map#initialize()} is called or 

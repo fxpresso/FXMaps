@@ -2,6 +2,8 @@ package ai.cogmission.fxmaps.demo;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
@@ -11,6 +13,7 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.Separator;
+import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToolBar;
 import javafx.scene.layout.GridPane;
@@ -19,6 +22,10 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
+import javafx.stage.Window;
+
+import org.controlsfx.control.CheckComboBox;
+
 import ai.cogmission.fxmaps.model.MarkerType;
 import ai.cogmission.fxmaps.model.PersistentMap;
 import ai.cogmission.fxmaps.model.Route;
@@ -47,12 +54,13 @@ public class RefImplToolBar extends ToolBar {
     private ToggleButton directionsBtn;
     
     private ComboBox<String> mapCombo;
-    private ComboBox<String> routeCombo;
+    private CheckComboBox<String> routeCombo;
     private Flyout mapFlyout;
     private Flyout routeFlyout;
     private ToggleButton mapChooser;
     private ToggleButton routeChooser;
     private CheckBox addWaypointBox;
+    private TextField newRouteField;
     
     private static final String DEFAULT_ROUTE_NAME = "temp (change me)";
     private ChangeListener<Flyout.Status> local;
@@ -157,8 +165,8 @@ public class RefImplToolBar extends ToolBar {
                 routeFlyout.dismiss();
             }else{
                 routeFlyout.flyout();
-                routeCombo.getEditor().requestFocus();
-                routeCombo.getEditor().selectAll();
+//                routeCombo.getEditor().requestFocus();
+//                routeCombo.getEditor().selectAll();
             }
         });
     }
@@ -178,10 +186,18 @@ public class RefImplToolBar extends ToolBar {
      * Initializes the control for choosing/creating maps
      */
     public void initRouteSelector() {
-        routeCombo = new ComboBox<>();
-        routeCombo.setEditable(true);
-        routeCombo.setPromptText("Type route name...");
-        routeCombo.valueProperty().addListener(getRouteSelectionListener());
+        routeCombo = new CheckComboBox<>();
+        // Make sure window resizes with combo box size changes due to display additions
+        routeCombo.layoutBoundsProperty().addListener((v, o, n) -> {
+            Window w = routeFlyout.getFlyoutContainer().getScene().getWindow();
+            if(w != null) {
+                w.setWidth(w.getWidth() + (n.getWidth() - o.getWidth()));
+            }
+        });
+        
+        //routeCombo.setEditable(true);
+        //routeCombo.setPromptText("Type route name...");
+        //routeCombo.valueProperty().addListener(getRouteSelectionListener());
     }
     
     /**
@@ -202,17 +218,50 @@ public class RefImplToolBar extends ToolBar {
         l.setTextFill(Color.WHITE);
         
         Button add = new Button("Add");
+        add.disableProperty().set(true);
         add.setOnAction(e -> mapCombo.valueProperty().set(mapCombo.getEditor().getText()));
         
-        Button del = new Button("Clear map");
-        del.setOnAction(e -> parent.clearMap());
+        Button clr = new Button("Clear map");
+        clr.disableProperty().set(true);
+        clr.setOnAction(e -> map.clearMap());
+        
+        Button del = new Button("Delete map");
+        del.disableProperty().set(true);
+        del.setOnAction(e -> {
+            map.clearMap();
+            map.deleteMap(mapCombo.getEditor().getText());
+            mapCombo.getItems().remove(mapCombo.getEditor().getText());
+            mapCombo.getSelectionModel().clearSelection();
+            mapCombo.getEditor().clear();
+            map.setMode(Mode.NORMAL);
+            mapChooser.fire();
+            map.setOverlayVisible(true);
+        });
+        
+        mapCombo.getEditor().textProperty().addListener((v, o, n) -> {
+            if(mapCombo.getEditor().getText() != null && mapCombo.getEditor().getText().length() > 0) {
+                add.disableProperty().set(false);
+                if(map.getMapStore().getMap(mapCombo.getEditor().getText()) != null) {
+                    clr.disableProperty().set(false);
+                    del.disableProperty().set(false);
+                }else{
+                    clr.disableProperty().set(true);
+                    del.disableProperty().set(true);
+                }
+            }else{
+                add.disableProperty().set(true);
+                clr.disableProperty().set(true);
+                del.disableProperty().set(true);
+            }
+        });
         
         gp.add(gpxLoader, 0, 0, 2, 1);
-        gp.add(new Separator(), 0, 1, 3, 1);
+        gp.add(new Separator(), 0, 1, 2, 1);
         gp.add(l, 0, 2, 2, 1);
         gp.add(mapCombo, 0, 3, 3, 1);
         gp.add(add, 3, 3);
-        gp.add(del, 4, 3);
+        gp.add(clr, 4, 3);
+        gp.add(del, 5, 3);
         
         return gp;
     }
@@ -227,62 +276,102 @@ public class RefImplToolBar extends ToolBar {
         gp.setHgap(5);
         gp.setVgap(5);
         
+        newRouteField = new TextField();
+        newRouteField.setDisable(true);
+        newRouteField.setOnAction(e -> {
+            newRouteField.setDisable(true);
+            String text = newRouteField.getText();
+            newRouteField.clear();
+            if(routeCombo.getItems().contains(text)) return;
+            routeCombo.getItems().add(text);
+            map.addRoute(new Route(text));
+        });
+        
+        Button addNew = new Button("New");
+        addNew.setOnAction(e -> {
+            newRouteField.setDisable(false);
+            newRouteField.requestFocus();
+        });
+        
         HBox rsMode = new HBox();
-        addWaypointBox = new CheckBox("Add Waypoint");
+        addWaypointBox = new CheckBox("Add Waypoints");
         addWaypointBox.setTextFill(Color.WHITE);
         addWaypointBox.setOnAction(e -> {
-            map.setMode(addWaypointBox.isSelected() ? Mode.ROUTE_ENTER : Mode.NORMAL);
+            map.setMode(addWaypointBox.isSelected() ? Mode.ADD_WAYPOINTS : Mode.NORMAL);
         });
         rsMode.getChildren().add(addWaypointBox);
         Label l = new Label("Select or enter route name:");
         l.setFont(Font.font(l.getFont().getFamily(), 12));
         l.setTextFill(Color.WHITE);
         Button add = new Button("Add");
-        //add.setOnAction();
+        add.setOnAction(e -> {
+            map.eraseMap();
+            List<String> items = routeCombo.getCheckModel().getCheckedItems();
+            List<Route> routes = null;
+            PersistentMap selectedMap = map.getMapStore().getMap(map.getMapStore().getSelectedMapName());
+            if(items != null && items.size() > 0) {
+                routes = items.stream().map(s -> selectedMap.getRoute(s)).collect(Collectors.toList());
+            }else{
+                return;
+            }
+            map.displayRoutes(routes);
+        });
         Button clr = new Button("Clear route");
-        clr.setOnAction(e -> map.clearRoute(map.getRoute(routeCombo.getSelectionModel().getSelectedItem())));
+        //clr.setOnAction(e -> map.clearRoute(map.getRoute(routeCombo.getSelectionModel().getSelectedItem())));
         Button del = new Button("Delete route");
-        del.setOnAction(e -> map.removeRoute(map.getRoute(routeCombo.getSelectionModel().getSelectedItem())));
+        //del.setOnAction(e -> map.removeRoute(map.getRoute(routeCombo.getSelectionModel().getSelectedItem())));
         
         gp.add(l, 0, 0, 2, 1);
+        gp.add(newRouteField, 0, 1, 2, 1);
+        gp.add(addNew, 2, 1, 1, 1);
+        gp.add(new Separator(), 0, 2, 5, 1);
         gp.add(rsMode, 2, 0, 2, 1);
-        gp.add(routeCombo, 0, 1, 2, 1);
-        gp.add(add, 2, 1);
-        gp.add(clr, 3, 1);
-        gp.add(del, 4, 1);
+        gp.add(routeCombo, 0, 3, 2, 1);
+        gp.add(add, 2, 3);
+        gp.add(clr, 3, 3);
+        gp.add(del, 4, 3);
         
         return gp;
     }
     
-    public void mapSelected(PersistentMap map) {
+    public void mapSelected(PersistentMap persistentMap) {
         if(mapChooser.isSelected()) {
             mapFlyout.getFlyoutStatusProperty().addListener(local = (v, o, n) -> {
                 
-                if(map.getRoutes().isEmpty() && n == Flyout.Status.COMPLETE) {
+                if(persistentMap.getRoutes().isEmpty() && n == Flyout.Status.COMPLETE) {
                     
                     if(!routeFlyout.flyoutShowing()) {
                         mapFlyout.getFlyoutStatusProperty().removeListener(local);
                         Platform.runLater(() -> {
-                            routeCombo.getEditor().setText(DEFAULT_ROUTE_NAME);
-                            routeCombo.getEditor().requestFocus();
-                            routeCombo.getEditor().selectAll();
+                            newRouteField.setText(DEFAULT_ROUTE_NAME);
+                            newRouteField.requestFocus();
+                            newRouteField.selectAll();
                         });
                         
                         routeChooser.fire();
                     }
-                }else{
+                    
+                    addWaypointBox.setSelected(true);
+                    map.setMode(Mode.ADD_WAYPOINTS);
+                }else if(n == Flyout.Status.COMPLETE){
+                    mapFlyout.getFlyoutStatusProperty().removeListener(local);
                     routeCombo.getItems().clear();
                     
-                    String[] sa = map.getRoutes().stream()
+                    String[] sa = persistentMap.getRoutes().stream()
                         .map(r -> r.getName())
                         .filter(name -> !routeCombo.getItems().contains(name))
                         .toArray(String[]::new);
                     routeCombo.getItems().addAll(sa);
+                    routeCombo.getCheckModel().check(0);
+                    
+                    map.refresh();
                  }
             });
             
             mapChooser.fire();            
         }
+        
+        map.refresh();
     }
     
     public void addMaps(Collection<String> mapNames) {
@@ -300,7 +389,7 @@ public class RefImplToolBar extends ToolBar {
     }
     
     public void selectMap(String name) {
-        routeCombo.getSelectionModel().clearSelection();
+        routeCombo.getCheckModel().clearChecks();
         routeCombo.getItems().clear();
         
         mapCombo.getSelectionModel().select(name);
@@ -329,6 +418,7 @@ public class RefImplToolBar extends ToolBar {
      */
     public ChangeListener<String> getMapSelectionListener() {
         return (v, o, n) -> {
+            if(n == null) return;
             parent.createOrSelectMap(n);
         };
     }
@@ -354,23 +444,12 @@ public class RefImplToolBar extends ToolBar {
     
     /**
      * Selects the route specified by name and changes the mode to 
-     * {@link Map.Mode#ROUTE_ENTER}; then displays the route.
+     * {@link Map.Mode#ADD_WAYPOINTS}; then displays the route.
      * 
      * @param name  the name of the route to set as "currentRoute"
      */
     public void selectRoute(String name) {
-        routeCombo.getSelectionModel().select(name);
-        
-        // Close the route chooser
-        if(routeChooser.isSelected()) {
-            routeChooser.fire();
-        }
-        
-        // Set the route enter mode
-        map.setMode(Map.Mode.ROUTE_ENTER);
-        if(!addWaypointBox.isSelected()) {
-            addWaypointBox.fire();
-        }
+        routeCombo.getCheckModel().check(name);
         
         // Display the route
         PersistentMap pm = map.getMapStore().getMap(map.getMapStore().getSelectedMapName());
@@ -390,6 +469,7 @@ public class RefImplToolBar extends ToolBar {
      */
     public ChangeListener<String> getRouteSelectionListener() {
         return (v, o, n) -> {
+            if(n == null) return;
             parent.createOrSelectRoute(n);
         };
     }
