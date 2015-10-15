@@ -7,6 +7,8 @@ import java.util.stream.Collectors;
 
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
@@ -221,9 +223,9 @@ public class RefImplToolBar extends ToolBar {
         add.disableProperty().set(true);
         add.setOnAction(e -> mapCombo.valueProperty().set(mapCombo.getEditor().getText()));
         
-        Button clr = new Button("Clear map");
+        Button clr = new Button("Erase map");
         clr.disableProperty().set(true);
-        clr.setOnAction(e -> map.clearMap());
+        clr.setOnAction(e -> map.eraseMap());
         
         Button del = new Button("Delete map");
         del.disableProperty().set(true);
@@ -284,13 +286,16 @@ public class RefImplToolBar extends ToolBar {
             newRouteField.clear();
             if(routeCombo.getItems().contains(text)) return;
             routeCombo.getItems().add(text);
-            map.addRoute(new Route(text));
+            routeCombo.getCheckModel().check(text);
+            Route newRoute = new Route(text);
+            map.addRoute(newRoute);
+            map.selectRoute(newRoute);
         });
         
         Button addNew = new Button("New");
         addNew.setOnAction(e -> {
-            newRouteField.setDisable(false);
             newRouteField.requestFocus();
+            newRouteField.setDisable(false);
         });
         
         HBox rsMode = new HBox();
@@ -343,6 +348,7 @@ public class RefImplToolBar extends ToolBar {
                     if(!routeFlyout.flyoutShowing()) {
                         mapFlyout.getFlyoutStatusProperty().removeListener(local);
                         Platform.runLater(() -> {
+                            newRouteField.setDisable(false);
                             newRouteField.setText(DEFAULT_ROUTE_NAME);
                             newRouteField.requestFocus();
                             newRouteField.selectAll();
