@@ -24,6 +24,11 @@ ai.cogmission.fxmaps.RefImpl
 I will keep its status up to date until I reach the point where I can start work on the project that uses this library (see [Nostromo](https://github.com/cogmission/Nostromo))
 
 ***
+**(2015-10-15)**
+* Added ability to display all or subset of routes
+* Added CheckedComboBox in route chooser
+![FXMaps Demo](http://metaware.us/images/screen.png)
+
 **(2015-10-12)**
 * Includes use of new Flyout 
 * ...above used for new Map & Route editors
