@@ -104,7 +104,7 @@ public class MapStoreTest {
             String json = store.store();
             
             assertNotNull(json);
-            assertEquals(8680, json.length());
+            assertEquals(8762, json.length());
             
             //////////// Load /////////////
             
@@ -244,7 +244,7 @@ public class MapStoreTest {
             String json = store.store();
             
             assertNotNull(json);
-            assertEquals(11118, json.length());
+            assertEquals(11200, json.length());
             
             //////////// Load /////////////
             

@@ -6,7 +6,7 @@ package ai.cogmission.fxmaps.model;
  * 
  * @author cogmission
  */
-public abstract class MapShape {
+public abstract class MapShape implements MapObject {
     
     /**
      * Returns the shape converted to the GMapsFX model

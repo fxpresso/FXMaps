@@ -147,6 +147,8 @@ public class MapPane extends StackPane implements Map {
                     clearMarker((Marker)currMapObj);
                 }else if(currMapObj instanceof Waypoint){
                     clearMarker(((Waypoint)currMapObj).getMarker());
+                }else if((currMapObj instanceof MapShape)) {
+                    clearShape((MapShape)currMapObj);
                 }
             });
             menu.getItems().add(deleteItem);
@@ -537,7 +539,7 @@ public class MapPane extends StackPane implements Map {
                 (PolylineOptions)polylineOptions);
      
         lastWaypoint.setConnection(poly);
-     
+        
         currentRoute.addLine(poly);
         return poly;
     }
@@ -555,6 +557,7 @@ public class MapPane extends StackPane implements Map {
      */
     @Override
     public void displayShape(MapShape shape) {
+        addLineMouseListener(getWaypointForLine(currentRoute, (Polyline)shape), (Polyline)shape);
         googleMap.addMapShape(shape.convert());
     }
     
@@ -674,8 +677,51 @@ public class MapPane extends StackPane implements Map {
         }
         
         for(Polyline p : route.getLines()) {
+            Waypoint wp = getWaypointForLine(route, p);
+            wp.setConnection(p);
+            
             displayShape(p);
         }
+    }
+    
+    private void addLineMouseListener(Waypoint wp, Polyline p) {
+        if(wp != null) {
+            System.out.println("Adding listener for waypoint: " + wp.getMarker().getMarkerOptions().getIcon());
+            
+            addObjectEventHandler((MapObject)p, MapEventType.RIGHTCLICK, (JSObject o) -> {
+                setCurrentMapObject(p);
+                
+                String id = wp.getMarker().getMarkerOptions().getIcon();
+                id = id.substring(id.lastIndexOf("M"), id.lastIndexOf("."));
+                contextMenu.getItems().get(0).setText("Clear " + id + "'s connection");
+                
+                LatLong cxtLL = new LatLong((JSObject) o.getMember("latLng"));
+                Point2D pt = googleMap.fromLatLngToPoint(cxtLL);
+                Window w = MapPane.this.getScene().getWindow();
+                contextMenu.show(
+                    mapComponent.getWebView(),
+                        w.getX() + pt.getX() + 10, 
+                            w.getY() + pt.getY());
+            });
+        }
+    }
+    
+    private Waypoint getWaypointForLine(Route route, Polyline line) {
+        for(Waypoint wp : route.getWaypoints()) {
+            if(wp.getConnection() != null && wp.getConnection().getOptions().getPath().equals(line.getOptions().getPath())) {
+                return wp;
+            }
+        }
+        return null;
+    }
+    
+    private Polyline getLineForWaypoint(Route route, Waypoint wp) {
+        for(Polyline line : route.getLines()) {
+            if(wp.getConnection() != null && wp.getConnection().getOptions().getPath().equals(line.getOptions().getPath())) {
+                return line;
+            }
+        }
+        return null;
     }
     
     /**
@@ -890,6 +936,7 @@ public class MapPane extends StackPane implements Map {
         return new PolylineOptions()
             .strokeColor("red")
             .visible(true)
+            .clickable(true)
             .strokeWeight(2);
     }
     
