@@ -153,6 +153,7 @@ public class RefImplToolBar extends ToolBar {
             }
         });
         
+        routeChooser.setDisable(true);
         routeChooser.setOnAction(e -> {
             // Protect against clicks during animation and button getting out of sync
             if(routeChooser.isSelected() && routeFlyout.getFlyoutStatusProperty().get() == Flyout.Status.RUNNING) {
@@ -238,6 +239,7 @@ public class RefImplToolBar extends ToolBar {
             map.setMode(Mode.NORMAL);
             mapChooser.fire();
             map.setOverlayVisible(true);
+            routeChooser.setDisable(true);
         });
         
         mapCombo.getEditor().textProperty().addListener((v, o, n) -> {
@@ -426,6 +428,7 @@ public class RefImplToolBar extends ToolBar {
         return (v, o, n) -> {
             if(n == null) return;
             parent.createOrSelectMap(n);
+            routeChooser.setDisable(false);
         };
     }
     
