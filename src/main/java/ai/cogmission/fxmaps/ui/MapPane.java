@@ -684,6 +684,12 @@ public class MapPane extends StackPane implements Map {
         }
     }
     
+    /**
+     * Adds the listener that invokes the context menu for lines.
+     * 
+     * @param wp    the {@link Waypoint} which owns the specified {@link Polyline}
+     * @param p     the Polyline to add the listener to.
+     */
     private void addLineMouseListener(Waypoint wp, Polyline p) {
         if(wp != null) {
             System.out.println("Adding listener for waypoint: " + wp.getMarker().getMarkerOptions().getIcon());
@@ -693,7 +699,8 @@ public class MapPane extends StackPane implements Map {
                 
                 String id = wp.getMarker().getMarkerOptions().getIcon();
                 id = id.substring(id.lastIndexOf("M"), id.lastIndexOf("."));
-                contextMenu.getItems().get(0).setText("Clear " + id + "'s connection");
+                id = id.substring(0, id.length() - 1) + " " + id.substring(id.length() - 1);
+                contextMenu.getItems().get(0).setText("Clear \"" + id + "\"'s connection");
                 
                 LatLong cxtLL = new LatLong((JSObject) o.getMember("latLng"));
                 Point2D pt = googleMap.fromLatLngToPoint(cxtLL);
@@ -706,7 +713,23 @@ public class MapPane extends StackPane implements Map {
         }
     }
     
-    private Waypoint getWaypointForLine(Route route, Polyline line) {
+    /**
+     * <p>
+     * Finds the Waypoint with the same path as the specified line's path.
+     * There are copies of Waypoints and Lines which are equal but do not 
+     * have the same underlying peer (JSObject). Therefore, picking lines
+     * on a map which aren't really displayed will result in context menu 
+     * actions that don't invoke anything. 
+     * </p><p>
+     * This method ensures that we reference the Waypoint and Polyline 
+     * which are in the {@link Route}'s list of waypoint and lines which 
+     * are the ones that are rendered.
+     * </p>
+     * @param route     The owning Route
+     * @param line      the Polyline to be rendered
+     * @return  the owning {@link Waypoint}
+     */
+    public Waypoint getWaypointForLine(Route route, Polyline line) {
         for(Waypoint wp : route.getWaypoints()) {
             if(wp.getConnection() != null && wp.getConnection().getOptions().getPath().equals(line.getOptions().getPath())) {
                 return wp;
@@ -715,7 +738,15 @@ public class MapPane extends StackPane implements Map {
         return null;
     }
     
-    private Polyline getLineForWaypoint(Route route, Waypoint wp) {
+    /**
+     * Returns the {@link Polyline} which is the line really rendered 
+     * for the specified {@link Waypoint}'s connection.
+     * 
+     * @param route     The owning Route
+     * @param wp        the Waypoint to be rendered
+     * @return
+     */
+    public Polyline getLineForWaypoint(Route route, Waypoint wp) {
         for(Polyline line : route.getLines()) {
             if(wp.getConnection() != null && wp.getConnection().getOptions().getPath().equals(line.getOptions().getPath())) {
                 return line;
