@@ -116,24 +116,6 @@ public class RefImpl extends Application {
         toolBar.mapSelected(pm);
     }
     
-    public void createOrSelectRoute(String routeName) {
-        if(routeName == null) {
-            // Analyze this later...
-            System.out.println("createOrSelectRoute(): null routeName");
-            return;
-        }
-        
-        // Will add a new route only if one doesn't exist under name
-        Route newRoute = new Route(routeName);
-        map.addRoute(newRoute);
-        
-        // Set reference to the current route
-        map.setCurrentRoute(map.getRoute(routeName));
-        
-        // Select and display the route
-        toolBar.selectRoute(routeName);
-    }
-    
     /**
      * The main() method is ignored in correctly deployed JavaFX application.
      * main() serves only as fallback in case the application can not be

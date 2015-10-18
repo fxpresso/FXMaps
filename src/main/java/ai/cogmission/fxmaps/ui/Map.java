@@ -21,6 +21,7 @@ import ai.cogmission.fxmaps.model.MapShapeOptions;
 import ai.cogmission.fxmaps.model.MapStore;
 import ai.cogmission.fxmaps.model.MapType;
 import ai.cogmission.fxmaps.model.Marker;
+import ai.cogmission.fxmaps.model.Polyline;
 import ai.cogmission.fxmaps.model.Route;
 import ai.cogmission.fxmaps.model.Waypoint;
 
@@ -205,7 +206,7 @@ public interface Map extends MapComponentInitializedListener {
      * @param marker    the marker to remove
      * @see Waypoint
      */
-    public void clearMarker(Marker marker);
+    public void eraseMarker(Marker marker);
     /**
      * Adds the specified {@link MapShape} to this {@code Map}
      * 
@@ -216,7 +217,7 @@ public interface Map extends MapComponentInitializedListener {
      * Removes the specified {@link MapShape} from this {@code Map}
      * @param shape     the {@code MapShape} to remove
      */
-    public void clearShape(MapShape shape);
+    public void eraseShape(MapShape shape);
     /**
      * Creates a {@link Waypoint} which is a combination of a 
      * {@link LatLon} and a {@link Marker}. 
@@ -259,14 +260,13 @@ public interface Map extends MapComponentInitializedListener {
      * Waypoint is already part of a {@link Route} and already has connecting leg lines.
      * @param waypoint     the Waypoint to add
      */
-    public void displayWaypoint(Waypoint point);
+    public void displayWaypoint(Waypoint waypoint);
     /**
      * Removes the {@link Waypoint} from the map and its connecting line.
-     * 
-     * @param wayoint
+     * @param waypoint
      * @see #displayMarker(Marker)
      */
-    public void removeWaypoint(Waypoint wayoint);
+    public void removeWaypoint(Waypoint waypoint);
     /**
      * Creates a {@link Route} by the given name.
      * 
@@ -321,6 +321,44 @@ public interface Map extends MapComponentInitializedListener {
      * @return  the specified route
      */
     public Route getRoute(String name);
+    /**
+     * <p>
+     * Finds the Waypoint with the same path as the specified line's path.
+     * There are copies of Waypoints and Lines which are equal but do not 
+     * have the same underlying peer (JSObject). Therefore, picking lines
+     * on a map which aren't really displayed will result in context menu 
+     * actions that don't invoke anything. 
+     * </p><p>
+     * This method ensures that we reference the Waypoint and Polyline 
+     * which are in the {@link Route}'s list of waypoint and lines which 
+     * are the ones that are rendered.
+     * </p>
+     * @param route     The owning Route
+     * @param line      the Polyline to be rendered
+     * @return  the owning {@link Waypoint}
+     */
+    public Waypoint getWaypointForLine(Route route, Polyline line);
+    /**
+     * Returns the {@link Polyline} which is the line really rendered 
+     * for the specified {@link Waypoint}'s connection.
+     * 
+     * @param route     The owning Route
+     * @param wp        the Waypoint to be rendered
+     * @return
+     */
+    public Polyline getLineForWaypoint(Route route, Waypoint wp);
+    /**
+     * Returns the {@link Route} which contains the specified {@link Waypoint}
+     * @param wp    the Waypoint whose owning Route will be returned
+     * @return      the Route which contains the specified Waypoint
+     */
+    public Route getRouteForWaypoint(Waypoint wp);
+    /**
+     * Returns the {@link Route} which contains the specified {@link Polyline}
+     * @param p    the Polyline whose owning Route will be returned
+     * @return      the Route which contains the specified Polyline
+     */
+    public Route getRouteForLine(Polyline p);
     /**
      * Redraws the map
      */
@@ -393,9 +431,16 @@ public interface Map extends MapComponentInitializedListener {
      * Sets the current {@link Route} to which {@link #addNewWaypoint(Waypoint)} will add a waypoint.
      * Routes may be created by calling {@link Map#createRoute(String)} with a unique name.
      * 
-     * @param r        the {@code Route} make current.
+     * @param r        the {@code Route} to make current.
      */
     public void setCurrentRoute(Route r);
+    /**
+     * Returns the current {@link Route} to which {@link #addNewWaypoint(Waypoint)} will add a waypoint.
+     * Routes may be created by calling {@link Map#createRoute(String)} with a unique name.
+     * 
+     * @returns the {@code Route} which is current current.
+     */
+    public Route getCurrentRoute();
     /**
      * Adds a {@link MapObject} JavaScript peer to the map object's DOM.
      * @param mapObject

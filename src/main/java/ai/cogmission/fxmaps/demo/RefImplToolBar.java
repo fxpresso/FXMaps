@@ -5,10 +5,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+
 import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
+import javafx.collections.ListChangeListener.Change;
 import javafx.geometry.Insets;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
@@ -26,7 +26,9 @@ import javafx.stage.FileChooser;
 import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Window;
 
+
 import org.controlsfx.control.CheckComboBox;
+
 
 import ai.cogmission.fxmaps.model.MarkerType;
 import ai.cogmission.fxmaps.model.PersistentMap;
@@ -131,6 +133,9 @@ public class RefImplToolBar extends ToolBar {
      * Add the ToolBar's action handlers etc.
      */
     public void configureToolBar() {
+        mapFlyout.setFlyoutStyle("-fx-background-color: rgba(0, 0, 0, 0.5); -fx-background-radius: 5,5,5,5;");
+        routeFlyout.setFlyoutStyle("-fx-background-color: rgba(0, 0, 0, 0.5); -fx-background-radius: 5,5,5,5;");
+        
         directionsBtn.setOnAction(e -> map.setDirectionsVisible(directionsBtn.isSelected()));
         directionsBtn.setSelected(true);
         
@@ -305,13 +310,19 @@ public class RefImplToolBar extends ToolBar {
         addWaypointBox.setTextFill(Color.WHITE);
         addWaypointBox.setOnAction(e -> {
             map.setMode(addWaypointBox.isSelected() ? Mode.ADD_WAYPOINTS : Mode.NORMAL);
+            
+            if(map.getCurrentRoute() != null) {
+                MarkerType.reset(map.getCurrentRoute());
+            }
         });
         rsMode.getChildren().add(addWaypointBox);
         Label l = new Label("Select or enter route name:");
         l.setFont(Font.font(l.getFont().getFamily(), 12));
         l.setTextFill(Color.WHITE);
-        Button add = new Button("Add");
-        add.setOnAction(e -> {
+        routeCombo.getCheckModel().getCheckedItems().addListener((Change<? extends String> c) -> {
+            // Set the current Route pointer in the map
+            alterSelection(c);
+            
             map.eraseMap();
             List<String> items = routeCombo.getCheckModel().getCheckedItems();
             List<Route> routes = null;
@@ -324,9 +335,15 @@ public class RefImplToolBar extends ToolBar {
             map.displayRoutes(routes);
         });
         Button clr = new Button("Clear route");
-        //clr.setOnAction(e -> map.clearRoute(map.getRoute(routeCombo.getSelectionModel().getSelectedItem())));
+        clr.setOnAction(e -> routeCombo.getCheckModel()
+            .getCheckedItems().stream().forEach(s -> map.clearRoute(map.getRoute(s))));
         Button del = new Button("Delete route");
-        //del.setOnAction(e -> map.removeRoute(map.getRoute(routeCombo.getSelectionModel().getSelectedItem())));
+        del.setOnAction(e -> routeCombo.getCheckModel()
+            .getCheckedItems().stream().forEach(s -> {
+                Route r = map.getRoute(s);
+                map.eraseRoute(r);
+                map.removeRoute(r);
+            }));
         
         gp.add(l, 0, 0, 2, 1);
         gp.add(newRouteField, 0, 1, 2, 1);
@@ -334,11 +351,34 @@ public class RefImplToolBar extends ToolBar {
         gp.add(new Separator(), 0, 2, 5, 1);
         gp.add(rsMode, 2, 0, 2, 1);
         gp.add(routeCombo, 0, 3, 2, 1);
-        gp.add(add, 2, 3);
-        gp.add(clr, 3, 3);
-        gp.add(del, 4, 3);
+        gp.add(clr, 2, 3);
+        gp.add(del, 3, 3);
         
         return gp;
+    }
+    
+    /**
+     * If a {@link Route} was selected, it will become the Map's currently
+     * selected route; if a Route was deselected, the Route with the smallest
+     * index will be selected or none will be selected if no other Route was
+     * selected when the currently deselected Route was specified.
+     * @param c
+     */
+    public void alterSelection(Change<? extends String> c) {
+        // Advance to the first change
+        c.next();
+        
+        if(c.wasAdded()) {
+            Route selectedRoute = map.getMapStore().getMap(map.getMapStore().getSelectedMapName()).getRoute(c.getAddedSubList().get(0));
+            map.setCurrentRoute(selectedRoute);
+        }else{
+            List<String> items = routeCombo.getCheckModel().getCheckedItems();
+            if(items.size() > 0) {
+                Route selectedRoute = map.getMapStore().getMap(map.getMapStore().getSelectedMapName()).getRoute(items.get(0));
+                map.setCurrentRoute(selectedRoute);
+            }
+        }
+        
     }
     
     public void mapSelected(PersistentMap persistentMap) {
@@ -450,38 +490,5 @@ public class RefImplToolBar extends ToolBar {
     public boolean containsRoute(String name) {
         return routeCombo.getItems().contains(name);
     }
-    
-    /**
-     * Selects the route specified by name and changes the mode to 
-     * {@link Map.Mode#ADD_WAYPOINTS}; then displays the route.
-     * 
-     * @param name  the name of the route to set as "currentRoute"
-     */
-    public void selectRoute(String name) {
-        routeCombo.getCheckModel().check(name);
-        
-        // Display the route
-        PersistentMap pm = map.getMapStore().getMap(map.getMapStore().getSelectedMapName());
-        Route r = pm.getRoute(name);
-        map.displayRoute(r);
-        
-        // Set the MarkerType index to the selected route's last marker letter
-        if(r.getDestination() != null) {
-            MarkerType.reset(pm.getRoute(name));
-        }
-    }
-    
-    /**
-     * Returns the handler which responds to the route combo box selection.
-     * 
-     * @return  the map combo handler
-     */
-    public ChangeListener<String> getRouteSelectionListener() {
-        return (v, o, n) -> {
-            if(n == null) return;
-            parent.createOrSelectRoute(n);
-        };
-    }
-    
-    
+     
 }

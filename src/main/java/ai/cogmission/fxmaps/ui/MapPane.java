@@ -2,6 +2,8 @@ package ai.cogmission.fxmaps.ui;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
@@ -143,12 +145,21 @@ public class MapPane extends StackPane implements Map {
             ContextMenu menu = new ContextMenu();
             MenuItem deleteItem = new MenuItem("Delete Object...");
             deleteItem.setOnAction(e -> {
-                if(currMapObj instanceof Marker) {
-                    clearMarker((Marker)currMapObj);
-                }else if(currMapObj instanceof Waypoint){
-                    clearMarker(((Waypoint)currMapObj).getMarker());
+                if(currMapObj instanceof Waypoint){
+                    Waypoint wp = ((Waypoint)currMapObj);
+                    Route editedRoute = getRouteForWaypoint(wp);
+                    eraseRoute(editedRoute);
+                    removeWaypoint(wp);
+                    displayRoute(editedRoute);
+                    MAP_STORE.store();
                 }else if((currMapObj instanceof MapShape)) {
-                    clearShape((MapShape)currMapObj);
+                    Polyline p = (Polyline)currMapObj;
+                    Route editedRoute = getRouteForLine(p);
+                    Waypoint editedWaypoint = getWaypointForLine(editedRoute, p);
+                    eraseRoute(editedRoute);
+                    removeWaypoint(editedWaypoint);
+                    displayRoute(editedRoute);
+                    MAP_STORE.store();
                 }
             });
             menu.getItems().add(deleteItem);
@@ -310,6 +321,17 @@ public class MapPane extends StackPane implements Map {
     }
     
     /**
+     * Returns the current {@link Route} to which {@link #addNewWaypoint(Waypoint)} will add a waypoint.
+     * Routes may be created by calling {@link Map#createRoute(String)} with a unique name.
+     * 
+     * @returns the {@code Route} which is current current.
+     */
+    @Override
+    public Route getCurrentRoute() {
+        return currentRoute;
+    }
+    
+    /**
      * Adds a {@link Node} acting as a toolbar
      * @param n a toolbar
      */
@@ -426,7 +448,7 @@ public class MapPane extends StackPane implements Map {
      * @see Waypoint
      */
     @Override
-    public void clearMarker(Marker marker) {
+    public void eraseMarker(Marker marker) {
         googleMap.removeMarker(marker.convert());
     }
 
@@ -508,6 +530,7 @@ public class MapPane extends StackPane implements Map {
         
         addObjectEventHandler(waypoint.getMarker(), MapEventType.RIGHTCLICK, (JSObject o) -> {
             setCurrentMapObject(waypoint);
+            setCurrentRoute(getRouteForWaypoint(waypoint));
             
             String id = waypoint.getMarker().getMarkerOptions().getIcon();
             id = id.substring(id.lastIndexOf("M"), id.lastIndexOf("."));
@@ -544,10 +567,14 @@ public class MapPane extends StackPane implements Map {
         return poly;
     }
 
+    /**
+     * Removes the {@link Waypoint} from the map and its connecting line.
+     * @param waypoint
+     * @see #displayMarker(Marker)
+     */
     @Override
     public void removeWaypoint(Waypoint waypoint) {
-        // TODO Auto-generated method stub
-        
+        currentRoute.removeWaypoint(waypoint);
     }
     
     /**
@@ -566,7 +593,7 @@ public class MapPane extends StackPane implements Map {
      * @param shape     the {@code MapShape} to remove
      */
     @Override
-    public void clearShape(MapShape shape) {
+    public void eraseShape(MapShape shape) {
         googleMap.removeMapShape(shape.convert());
     }
     
@@ -696,6 +723,7 @@ public class MapPane extends StackPane implements Map {
             
             addObjectEventHandler((MapObject)p, MapEventType.RIGHTCLICK, (JSObject o) -> {
                 setCurrentMapObject(p);
+                setCurrentRoute(getRouteForLine((Polyline)p));
                 
                 String id = wp.getMarker().getMarkerOptions().getIcon();
                 id = id.substring(id.lastIndexOf("M"), id.lastIndexOf("."));
@@ -729,6 +757,7 @@ public class MapPane extends StackPane implements Map {
      * @param line      the Polyline to be rendered
      * @return  the owning {@link Waypoint}
      */
+    @Override
     public Waypoint getWaypointForLine(Route route, Polyline line) {
         for(Waypoint wp : route.getWaypoints()) {
             if(wp.getConnection() != null && wp.getConnection().getOptions().getPath().equals(line.getOptions().getPath())) {
@@ -746,6 +775,7 @@ public class MapPane extends StackPane implements Map {
      * @param wp        the Waypoint to be rendered
      * @return
      */
+    @Override
     public Polyline getLineForWaypoint(Route route, Waypoint wp) {
         for(Polyline line : route.getLines()) {
             if(wp.getConnection() != null && wp.getConnection().getOptions().getPath().equals(line.getOptions().getPath())) {
@@ -753,6 +783,32 @@ public class MapPane extends StackPane implements Map {
             }
         }
         return null;
+    }
+    
+    /**
+     * Returns the {@link Route} which contains the specified {@link Waypoint}
+     * @param wp    the Waypoint whose owning Route will be returned
+     * @return      the Route which contains the specified Waypoint
+     */
+    @Override
+    public Route getRouteForWaypoint(Waypoint wp) {
+       Optional<Route> or = Optional.of(MAP_STORE.getMap(MAP_STORE.getSelectedMapName()).getRoutes().stream()
+           .filter(r -> r.getWaypoints().stream().anyMatch(w -> w.getLatLon().equals(wp.getLatLon())))
+           .collect(Collectors.toList()).get(0));
+       return or.isPresent() ? or.get() : null;
+    }
+    
+    /**
+     * Returns the {@link Route} which contains the specified {@link Polyline}
+     * @param p    the Polyline whose owning Route will be returned
+     * @return      the Route which contains the specified Polyline
+     */
+    @Override
+    public Route getRouteForLine(Polyline p) {
+        Optional<Route> or = Optional.of(MAP_STORE.getMap(MAP_STORE.getSelectedMapName()).getRoutes().stream()
+            .filter(r -> r.getLines().stream().anyMatch(l -> l.getOptions().getPath().equals(p.getOptions().getPath())))
+            .collect(Collectors.toList()).get(0));
+        return or.isPresent() ? or.get() : null;
     }
     
     /**
