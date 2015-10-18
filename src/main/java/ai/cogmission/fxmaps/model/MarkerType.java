@@ -85,6 +85,9 @@ public enum MarkerType {
      * @param r     the Route we're resetting to
      */
     public static void reset(Route r) {
+        // This is an empty route
+        if(r.getDestination() == null) return;
+        
         Waypoint dest = r.getDestination();
         String desc = dest.getMarker().getMarkerOptions().getIcon();
         MarkerType color = valueOf(desc.substring(desc.lastIndexOf("/") + 1, desc.indexOf("_")).toUpperCase());

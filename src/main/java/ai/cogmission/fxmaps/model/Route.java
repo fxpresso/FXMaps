@@ -76,6 +76,22 @@ public class Route {
      * @param w
      */
     public void removeWaypoint(Waypoint w) {
+        int loc = observableDelegate.indexOf(w);
+        if(loc > 0) {
+            Polyline p = w.getConnection();
+                  
+            // If removing the last waypoint, make next-to-last, the destination
+            if(loc == observableDelegate.size() - 1) {
+                destination = observableDelegate.get(loc - 1);
+            }else{ // Removing waypoint from middle of route
+                int lineIdx = lines.indexOf(p);
+                Polyline nextLine = lines.get(lineIdx + 1);
+                Waypoint prevWaypoint = observableDelegate.get(loc - 1);
+                nextLine.getOptions().getPath().set(0, prevWaypoint.getLatLon());
+                createUnderlying();
+            }
+            removeLine(p);
+        }
         observableDelegate.remove(w);
     }
     
@@ -244,10 +260,18 @@ public class Route {
         observableDelegate = FXCollections.observableArrayList(delegate);
         delegate.clear();
         
+        try {
+            createUnderlying();
+        }catch(NullPointerException npe) {
+            throw new MalformedJsonException(npe.getMessage());
+        }
+    }
+    
+    public void createUnderlying() {
         // If deserializing in non-headless mode, build javascript peers
         if(Platform.isFxApplicationThread()) {
             if(origin == null || origin.getMarker() == null) {
-                throw new MalformedJsonException("Route had malformed origin");
+                throw new NullPointerException("Route had malformed origin");
             }
             
             origin.getMarker().createUnderlying();
