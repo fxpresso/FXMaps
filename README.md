@@ -32,6 +32,8 @@ I will keep its status up to date until I reach the point where I can start work
 * Added the ability for the Markers to be reset to the last letter in 
   the route so that continuations of a route by adding waypoints will 
   result in markers with succeeding letters (correct letters)
+* Removed the "Add" button, routes now can be displayed or hidden by 
+  selecting or deselecting the route CheckComboBox items
 
 **(2015-10-15)**
 * Added ability to display all or subset of routes
