@@ -23,7 +23,7 @@ A new JavaFX Mapping API which allows you to embed Google Maps in your JavaFX ap
 
 Right now it is a project meant for import into an IDE. There is a reference implementation that I will be working on to show the potential of this library. The class is: 
 
-ai.cogmission.fxmaps.RefImpl
+**ai.cogmission.fxmaps.RefImpl**
 
 I will keep its status up to date until I reach the point where I can start work on the project that uses this library (see [Nostromo](https://github.com/cogmission/Nostromo))
 
