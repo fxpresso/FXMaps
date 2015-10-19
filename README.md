@@ -6,7 +6,9 @@
 
 **NOTE: Minimum JavaSE version is 1.8**
 
+***
 #### Originally Developed for Use with [Nostromo](https://github.com/cogmission/Nostromo), a [Numenta HTM Challenge entry.](http://numenta.com/blog/introducing-the-numenta-htm-challenge.html)
+***
 
 A new JavaFX Mapping API which allows you to embed Google Maps in your JavaFX application and combines two API's (GMapsFX and google-maps-services-java) to allow one to easily use functionality missing in both, such as:
 
