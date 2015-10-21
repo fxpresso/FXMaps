@@ -10,6 +10,9 @@
 #### Originally Developed for Use with [Nostromo](https://github.com/cogmission/Nostromo), a [Numenta HTM Challenge entry.](http://numenta.com/blog/introducing-the-numenta-htm-challenge.html)
 
 (2015-10-21) Progress delayed for a few days while I work on machine intelligence work: [htm.java](https://github.com/numenta/htm.java)  and [Cortical.io](http://cortical.io)
+
+***
+[Also see the Ultimate JavaFX Layout Engine](https://github.com/fxpresso/Mosaic)
 ***
 
 A new JavaFX Mapping API which allows you to embed Google Maps in your JavaFX application and combines two API's (GMapsFX and google-maps-services-java) to allow one to easily use functionality missing in both, such as:
